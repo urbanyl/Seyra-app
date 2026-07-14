@@ -129,14 +129,10 @@ class _ChatListState extends State<ChatList> {
       stream: query.snapshots(),
       builder: (context, AsyncSnapshot<dynamic> asyncSnapshot) {
         if (asyncSnapshot.connectionState == ConnectionState.waiting && _limit == 15) {
-          return const Center(
-            child: CircularProgressIndicator.adaptive(),
-          );
+          return const SizedBox.shrink();
         }
         if (!asyncSnapshot.hasData || asyncSnapshot.data == null) {
-          return const Center(
-            child: CircularProgressIndicator.adaptive(),
-          );
+          return const SizedBox.shrink();
         }
         var docs = asyncSnapshot.data.docs;
 
@@ -278,18 +274,18 @@ class _ChatListState extends State<ChatList> {
                         _searchQuery = val;
                       });
                     },
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Hanken Grotesk',
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF111111),
+                      color: theme.colorScheme.onSurface,
                     ),
                     decoration: InputDecoration(
                       hintText: 'Search chats, names, numbers...',
-                      prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF111111)),
+                      prefixIcon: Icon(Icons.search_rounded, color: theme.colorScheme.onSurface),
                       suffixIcon: _searchQuery.isNotEmpty
                           ? IconButton(
-                              icon: const Icon(Icons.clear_rounded, color: Color(0xFF111111)),
+                              icon: Icon(Icons.clear_rounded, color: theme.colorScheme.onSurface),
                               onPressed: () {
                                 _searchController.clear();
                                 setState(() {
@@ -317,7 +313,7 @@ class _ChatListState extends State<ChatList> {
                                 fontFamily: 'Hanken Grotesk',
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
-                                color: theme.textTheme.titleLarge?.color ?? const Color(0xFF111111),
+                                color: theme.textTheme.titleLarge?.color ?? theme.colorScheme.onSurface,
                               ),
                             ),
                             Container(
@@ -325,7 +321,7 @@ class _ChatListState extends State<ChatList> {
                               decoration: BoxDecoration(
                                 color: isDark
                                     ? Colors.white.withOpacity(0.12)
-                                    : const Color(0xFF111111).withOpacity(0.08),
+                                    : theme.colorScheme.onSurface.withOpacity(0.08),
                                 borderRadius: BorderRadius.circular(16),
                               ),
                               child: Text(
@@ -334,7 +330,7 @@ class _ChatListState extends State<ChatList> {
                                   fontFamily: 'Hanken Grotesk',
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
-                                  color: theme.textTheme.bodyMedium?.color ?? const Color(0xFF111111),
+                                  color: theme.textTheme.bodyMedium?.color ?? theme.colorScheme.onSurface,
                                 ),
                               ),
                             ),

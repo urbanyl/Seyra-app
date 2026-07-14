@@ -26,6 +26,10 @@ class MyUser {
     final afterAt = username.substring(1);
     return RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(afterAt);
   }
+
+  static String cleanDisplayName(String input) {
+    return input.replaceFirst('@', '').trim();
+  }
 }
 
 class UserManager with ChangeNotifier {
@@ -35,12 +39,12 @@ class UserManager with ChangeNotifier {
 
   List<String> _groupUserIds = [];
 
-  void addtogroupdUserIds(String userId){
+  void addtogroupdUserIds(String userId) {
     _groupUserIds.add(userId);
     notifyListeners();
   }
 
-  List<String> get groupUserIds{
+  List<String> get groupUserIds {
     final myUid = FirebaseAuth.instance.currentUser?.uid;
     if (myUid == null) return List.from(_groupUserIds);
     final ids = <String>{..._groupUserIds, myUid};
@@ -62,8 +66,10 @@ class UserManager with ChangeNotifier {
         profilepic: profilePic);
     await FirebaseFirestore.instance.collection('users').doc(userId).set({
       'username': username,
-      'displayName': displayName ?? username,
-      'profilePic': profilePic.isEmpty ? 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80' : profilePic,
+      'displayName': displayName ?? MyUser.cleanDisplayName(username),
+      'profilePic': profilePic.isEmpty
+          ? 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80'
+          : profilePic,
       'chats': [],
       'channels': []
     }, SetOptions(merge: true));
@@ -83,15 +89,17 @@ class UserManager with ChangeNotifier {
         _currentUserContacts.add(MyUser(
             username: doc.data()['username'] ?? '@unknown',
             userId: doc.id,
-            profilepic: doc.data()['profilePic'] ?? 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
-            displayName: doc.data()['displayName'] ?? doc.data()['username'] ?? 'User'));
+            profilepic: doc.data()['profilePic'] ??
+                'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
+            displayName: doc.data()['displayName'] ??
+                doc.data()['username'] ??
+                'User'));
       }
     }
     notifyListeners();
   }
 
-  Future<void> setUpContacts() async {
-  }
+  Future<void> setUpContacts() async {}
 
   void createCurrentUserContact(
       Map<String, dynamic> data, String userId, String displayName) {
@@ -108,7 +116,8 @@ class UserManager with ChangeNotifier {
     final lowerUsername = username.toLowerCase().trim();
 
     for (final element in _currentUserContacts) {
-      final String elementUsername = (element.username).toLowerCase().trim();
+      final String elementUsername =
+          (element.username).toLowerCase().trim();
       if (elementUsername.isEmpty) continue;
 
       if (elementUsername == lowerUsername) {

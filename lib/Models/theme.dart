@@ -1,40 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-enum ThemePreDefinedTextSize{
+enum ThemePreDefinedTextSize {
   Small,
   Medium,
   Large,
 }
 
-enum ThemePreDefinedColors{
+enum ThemePreDefinedColors {
   white,
   Dark,
   Red,
   Blue,
   Green,
   Yellow,
-  Orange
+  Orange,
 }
 
-class MyTheme with ChangeNotifier{
-
+class MyTheme with ChangeNotifier {
   late TextTheme text = TextTheme();
   MaterialColor? _selectedMainColor;
   MaterialColor? get selectedMainColorValue => _selectedMainColor;
   double? _selectedTextSize;
   double? get selectedTextSize => _selectedTextSize;
 
-  final appPreDefinedTextSizes = <ThemePreDefinedTextSize,double>{
-    ThemePreDefinedTextSize.Small : 7,
-    ThemePreDefinedTextSize.Medium : 10,
-    ThemePreDefinedTextSize.Large : 30, 
+  final appPreDefinedTextSizes = <ThemePreDefinedTextSize, double>{
+    ThemePreDefinedTextSize.Small: 7,
+    ThemePreDefinedTextSize.Medium: 10,
+    ThemePreDefinedTextSize.Large: 30,
   };
 
   final appPreDefinedColors = {
-    ThemePreDefinedColors.white : MaterialColor(
+    ThemePreDefinedColors.white: MaterialColor(
       Colors.white.value,
-       <int, Color>{
+      <int, Color>{
         50: Colors.white54,
         100: Colors.white60,
         200: Colors.white70,
@@ -45,9 +44,9 @@ class MyTheme with ChangeNotifier{
         700: Colors.white,
         800: Colors.white,
         900: Colors.white,
-      }
+      },
     ),
-    ThemePreDefinedColors.Dark : MaterialColor(
+    ThemePreDefinedColors.Dark: MaterialColor(
       Colors.black.value,
       const <int, Color>{
         50: Colors.black,
@@ -60,15 +59,14 @@ class MyTheme with ChangeNotifier{
         700: Colors.black,
         800: Colors.black,
         900: Colors.black,
-      }
+      },
     ),
-    ThemePreDefinedColors.Red : Colors.red,
-    ThemePreDefinedColors.Blue : Colors.blue,
-    ThemePreDefinedColors.Green : Colors.green,
-    ThemePreDefinedColors.Yellow : Colors.yellow,
-    ThemePreDefinedColors.Orange : Colors.deepOrange
+    ThemePreDefinedColors.Red: Colors.red,
+    ThemePreDefinedColors.Blue: Colors.blue,
+    ThemePreDefinedColors.Green: Colors.green,
+    ThemePreDefinedColors.Yellow: Colors.yellow,
+    ThemePreDefinedColors.Orange: Colors.deepOrange,
   };
-
 
   bool _isDarkMode = false;
   bool get isDarkMode => _isDarkMode;
@@ -87,48 +85,58 @@ class MyTheme with ChangeNotifier{
     notifyListeners();
   }
 
-
-
   void selectedMainColor(ThemePreDefinedColors preDefinedColors) async {
     final prefs = await SharedPreferences.getInstance();
-    prefs.setInt('color-value', appPreDefinedColors[preDefinedColors]!.value);
-    prefs.setInt('color-shade50', appPreDefinedColors[preDefinedColors]!.shade50.value);
-    prefs.setInt('color-shade100', appPreDefinedColors[preDefinedColors]!.shade100.value);
-    prefs.setInt('color-shade200', appPreDefinedColors[preDefinedColors]!.shade200.value);
-    prefs.setInt('color-shade300', appPreDefinedColors[preDefinedColors]!.shade300.value);
-    prefs.setInt('color-shade400', appPreDefinedColors[preDefinedColors]!.shade400.value);
-    prefs.setInt('color-shade500', appPreDefinedColors[preDefinedColors]!.shade500.value);
-    prefs.setInt('color-shade600', appPreDefinedColors[preDefinedColors]!.shade600.value);
-    prefs.setInt('color-shade700', appPreDefinedColors[preDefinedColors]!.shade700.value);
-    prefs.setInt('color-shade800', appPreDefinedColors[preDefinedColors]!.shade800.value);
-    prefs.setInt('color-shade900', appPreDefinedColors[preDefinedColors]!.shade900.value);
+    prefs.setInt(
+        'color-value', appPreDefinedColors[preDefinedColors]!.value);
+    prefs.setInt('color-shade50',
+        appPreDefinedColors[preDefinedColors]!.shade50.value);
+    prefs.setInt('color-shade100',
+        appPreDefinedColors[preDefinedColors]!.shade100.value);
+    prefs.setInt('color-shade200',
+        appPreDefinedColors[preDefinedColors]!.shade200.value);
+    prefs.setInt('color-shade300',
+        appPreDefinedColors[preDefinedColors]!.shade300.value);
+    prefs.setInt('color-shade400',
+        appPreDefinedColors[preDefinedColors]!.shade400.value);
+    prefs.setInt('color-shade500',
+        appPreDefinedColors[preDefinedColors]!.shade500.value);
+    prefs.setInt('color-shade600',
+        appPreDefinedColors[preDefinedColors]!.shade600.value);
+    prefs.setInt('color-shade700',
+        appPreDefinedColors[preDefinedColors]!.shade700.value);
+    prefs.setInt('color-shade800',
+        appPreDefinedColors[preDefinedColors]!.shade800.value);
+    prefs.setInt('color-shade900',
+        appPreDefinedColors[preDefinedColors]!.shade900.value);
     _selectedMainColor = appPreDefinedColors[preDefinedColors]!;
     notifyListeners();
   }
 
   Future<void> setTheme() async {
-    final prefs= await SharedPreferences.getInstance();
-    if(prefs.containsKey('color-value')){
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.containsKey('color-value')) {
       int value = prefs.getInt('color-value')!;
-      final swatch = <int,Color>{
-        50 : Color(prefs.getInt('color-shade50')!),
-        100 : Color(prefs.getInt('color-shade100')!),
-        200 : Color(prefs.getInt('color-shade200')!),
-        300 : Color(prefs.getInt('color-shade300')!),
-        400 : Color(prefs.getInt('color-shade400')!),
-        500 : Color(prefs.getInt('color-shade500')!),
-        600 : Color(prefs.getInt('color-shade600')!),
-        700 : Color(prefs.getInt('color-shade700')!),
-        800 : Color(prefs.getInt('color-shade800')!),
-        900 : Color(prefs.getInt('color-shade900')!),
+      final swatch = <int, Color>{
+        50: Color(prefs.getInt('color-shade50')!),
+        100: Color(prefs.getInt('color-shade100')!),
+        200: Color(prefs.getInt('color-shade200')!),
+        300: Color(prefs.getInt('color-shade300')!),
+        400: Color(prefs.getInt('color-shade400')!),
+        500: Color(prefs.getInt('color-shade500')!),
+        600: Color(prefs.getInt('color-shade600')!),
+        700: Color(prefs.getInt('color-shade700')!),
+        800: Color(prefs.getInt('color-shade800')!),
+        900: Color(prefs.getInt('color-shade900')!),
       };
       _selectedMainColor = MaterialColor(value, swatch);
-    }else{
+    } else {
       _selectedMainColor = Colors.deepPurple;
     }
-    if(prefs.containsKey('textSize') && prefs.getDouble('textSize') != null){
+    if (prefs.containsKey('textSize') &&
+        prefs.getDouble('textSize') != null) {
       _selectedTextSize = prefs.getDouble('textSize');
-    }else{
+    } else {
       _selectedTextSize = 20;
     }
     _isDarkMode = prefs.getBool('isDarkMode') ?? false;
@@ -137,206 +145,60 @@ class MyTheme with ChangeNotifier{
   ThemeData get getTheme {
     final double baseFontSize = _selectedTextSize ?? 16;
     if (_isDarkMode) {
-      final Color accent = _selectedMainColor?.shade500 ?? const Color(0xFF3B66FF);
-      return ThemeData(
-        useMaterial3: true,
-        brightness: Brightness.dark,
-        primaryColor: const Color(0xFFFFFFFF),
-        scaffoldBackgroundColor: const Color(0xFF0F0F11),
-        dialogBackgroundColor: const Color(0xFF16161A),
-        dividerColor: const Color(0xFFFFFFFF).withOpacity(0.08),
-        colorScheme: ColorScheme.dark(
-          primary: const Color(0xFFFFFFFF),
-          onPrimary: const Color(0xFF0F0F11),
-          secondary: const Color(0xFF222226),
-          onSecondary: const Color(0xFFFFFFFF),
-          tertiary: accent,
-          onTertiary: const Color(0xFFFFFFFF),
-          surface: const Color(0xFF16161A),
-          onSurface: const Color(0xFFFFFFFF),
-          background: const Color(0xFF0F0F11),
-          onBackground: const Color(0xFFFFFFFF),
-        ),
-        appBarTheme: AppBarTheme(
-          elevation: 0,
-          scrolledUnderElevation: 0,
-          backgroundColor: const Color(0xFF0F0F11),
-          foregroundColor: const Color(0xFFFFFFFF),
-          centerTitle: true,
-          iconTheme: const IconThemeData(color: Color(0xFFFFFFFF)),
-          actionsIconTheme: const IconThemeData(color: Color(0xFFFFFFFF)),
-          shape: Border(
-            bottom: BorderSide(
-              color: const Color(0xFFFFFFFF).withOpacity(0.08),
-              width: 1,
-            ),
-          ),
-          titleTextStyle: const TextStyle(
-            fontFamily: 'Hanken Grotesk',
-            fontSize: 22,
-            fontWeight: FontWeight.w800,
-            color: Color(0xFFFFFFFF),
-            letterSpacing: -0.5,
-          ),
-        ),
-        tabBarTheme: TabBarThemeData(
-          labelColor: const Color(0xFFFFFFFF),
-          unselectedLabelColor: const Color(0xFFFFFFFF).withOpacity(0.4),
-          labelStyle: const TextStyle(
-            fontFamily: 'Geist',
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 0.8,
-          ),
-          unselectedLabelStyle: const TextStyle(
-            fontFamily: 'Geist',
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            letterSpacing: 0.8,
-          ),
-          indicatorSize: TabBarIndicatorSize.label,
-          indicator: UnderlineTabIndicator(
-            borderSide: BorderSide(color: accent, width: 4),
-            insets: const EdgeInsets.only(bottom: 0),
-          ),
-        ),
-        cardTheme: CardThemeData(
-          color: const Color(0xFF16161A),
-          elevation: 0,
-          margin: EdgeInsets.zero,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24.0),
-            side: BorderSide(color: const Color(0xFFFFFFFF).withOpacity(0.08), width: 1.0),
-          ),
-        ),
-        floatingActionButtonTheme: FloatingActionButtonThemeData(
-          backgroundColor: const Color(0xFFFFFFFF),
-          foregroundColor: const Color(0xFF0F0F11),
-          elevation: 0,
-          focusElevation: 0,
-          hoverElevation: 0,
-          highlightElevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24.0),
-            side: BorderSide(color: accent, width: 2.0),
-          ),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: const Color(0xFF16161A),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          hintStyle: TextStyle(color: const Color(0xFFFFFFFF).withOpacity(0.4)),
-          labelStyle: TextStyle(color: const Color(0xFFFFFFFF).withOpacity(0.6)),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(24.0),
-            borderSide: BorderSide(color: const Color(0xFFFFFFFF).withOpacity(0.08), width: 1.0),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(24.0),
-            borderSide: BorderSide(color: const Color(0xFFFFFFFF).withOpacity(0.08), width: 1.0),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(24.0),
-            borderSide: const BorderSide(color: Color(0xFFFFFFFF), width: 2.0),
-          ),
-        ),
-        popupMenuTheme: PopupMenuThemeData(
-          color: const Color(0xFF16161A),
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24.0),
-            side: BorderSide(color: const Color(0xFFFFFFFF).withOpacity(0.08), width: 1.0),
-          ),
-        ),
-        textTheme: TextTheme(
-          headlineLarge: const TextStyle(
-            fontFamily: 'Hanken Grotesk',
-            fontSize: 32,
-            fontWeight: FontWeight.w800,
-            color: Color(0xFFFFFFFF),
-            letterSpacing: -1.0,
-          ),
-          headlineMedium: const TextStyle(
-            fontFamily: 'Hanken Grotesk',
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFFFFFFFF),
-            letterSpacing: -0.5,
-          ),
-          bodyLarge: TextStyle(
-            fontFamily: 'Hanken Grotesk',
-            fontSize: baseFontSize + 2,
-            fontWeight: FontWeight.normal,
-            color: const Color(0xFFFFFFFF),
-          ),
-          bodyMedium: TextStyle(
-            fontFamily: 'Hanken Grotesk',
-            fontSize: baseFontSize,
-            fontWeight: FontWeight.normal,
-            color: const Color(0xFFFFFFFF),
-          ),
-          labelLarge: const TextStyle(
-            fontFamily: 'Geist',
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFFFFFFFF),
-            letterSpacing: 0.05,
-          ),
-          labelSmall: const TextStyle(
-            fontFamily: 'Geist',
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFFFFFFFF),
-            letterSpacing: 0.02,
-          ),
-        ),
-      );
+      return _buildDarkTheme(baseFontSize);
     }
-    final Color accent = _selectedMainColor?.shade500 ?? const Color(0xFF2B54ED);
+    return _buildLightTheme(baseFontSize);
+  }
+
+  ThemeData _buildDarkTheme(double baseFontSize) {
+    final Color accent =
+        _selectedMainColor?.shade500 ?? const Color(0xFF6C63FF);
+    final Color accentLight =
+        _selectedMainColor?.shade300 ?? const Color(0xFF9D97FF);
+    final surface = const Color(0xFF1A1A2E);
+    final surfaceElevated = const Color(0xFF222240);
+    final bg = const Color(0xFF0F0F1A);
+    final border = Colors.white.withOpacity(0.06);
+    final borderFocus = accent.withOpacity(0.6);
+
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.light,
-      primaryColor: const Color(0xFF111111),
-      scaffoldBackgroundColor: const Color(0xFFFFFFFF),
-      dialogBackgroundColor: const Color(0xFFFFFFFF),
-      dividerColor: const Color(0xFF111111).withOpacity(0.1),
-      colorScheme: ColorScheme.light(
-        primary: const Color(0xFF111111),
-        onPrimary: const Color(0xFFFFFFFF),
-        secondary: const Color(0xFFF2F2F2),
-        onSecondary: const Color(0xFF111111),
+      brightness: Brightness.dark,
+      primaryColor: accent,
+      scaffoldBackgroundColor: bg,
+      dialogBackgroundColor: surface,
+      dividerColor: border,
+      colorScheme: ColorScheme.dark(
+        primary: accent,
+        onPrimary: Colors.white,
+        secondary: surfaceElevated,
+        onSecondary: Colors.white,
         tertiary: accent,
-        onTertiary: const Color(0xFF111111),
-        surface: const Color(0xFFFFFFFF),
-        onSurface: const Color(0xFF111111),
-        background: const Color(0xFFFFFFFF),
-        onBackground: const Color(0xFF111111),
+        onTertiary: Colors.white,
+        surface: surface,
+        onSurface: const Color(0xFFE8E8F0),
+        background: bg,
+        onBackground: const Color(0xFFE8E8F0),
+        error: const Color(0xFFFF5252),
       ),
       appBarTheme: AppBarTheme(
         elevation: 0,
         scrolledUnderElevation: 0,
-        backgroundColor: const Color(0xFFFFFFFF),
-        foregroundColor: const Color(0xFF111111),
+        backgroundColor: bg,
+        foregroundColor: const Color(0xFFE8E8F0),
         centerTitle: true,
-        iconTheme: const IconThemeData(color: Color(0xFF111111)),
-        actionsIconTheme: const IconThemeData(color: Color(0xFF111111)),
-        shape: Border(
-          bottom: BorderSide(
-            color: const Color(0xFF111111).withOpacity(0.08),
-            width: 1,
-          ),
-        ),
+        iconTheme: IconThemeData(color: const Color(0xFFE8E8F0).withOpacity(0.8)),
         titleTextStyle: const TextStyle(
           fontFamily: 'Hanken Grotesk',
-          fontSize: 22,
+          fontSize: 20,
           fontWeight: FontWeight.w800,
-          color: Color(0xFF111111),
+          color: Color(0xFFE8E8F0),
           letterSpacing: -0.5,
         ),
       ),
       tabBarTheme: TabBarThemeData(
-        labelColor: const Color(0xFF111111),
-        unselectedLabelColor: const Color(0xFF111111).withOpacity(0.4),
+        labelColor: accent,
+        unselectedLabelColor: const Color(0xFFE8E8F0).withOpacity(0.35),
         labelStyle: const TextStyle(
           fontFamily: 'Geist',
           fontSize: 13,
@@ -351,102 +213,387 @@ class MyTheme with ChangeNotifier{
         ),
         indicatorSize: TabBarIndicatorSize.label,
         indicator: UnderlineTabIndicator(
-          borderSide: BorderSide(color: accent, width: 4),
+          borderSide: BorderSide(color: accent, width: 3),
           insets: const EdgeInsets.only(bottom: 0),
         ),
       ),
       cardTheme: CardThemeData(
-        color: const Color(0xFFFFFFFF),
+        color: surface,
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24.0),
-          side: BorderSide(color: const Color(0xFF111111).withOpacity(0.1), width: 1.0),
+          borderRadius: BorderRadius.circular(16.0),
+          side: BorderSide(color: border, width: 1.0),
         ),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: const Color(0xFF111111),
-        foregroundColor: const Color(0xFFFFFFFF),
-        elevation: 0,
-        focusElevation: 0,
-        hoverElevation: 0,
-        highlightElevation: 0,
+        backgroundColor: accent,
+        foregroundColor: Colors.white,
+        elevation: 4,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24.0),
-          side: BorderSide(color: accent, width: 2.0),
+          borderRadius: BorderRadius.circular(16.0),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: const Color(0xFFFFFFFF),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        hintStyle: TextStyle(color: const Color(0xFF111111).withOpacity(0.4)),
-        labelStyle: TextStyle(color: const Color(0xFF111111).withOpacity(0.6)),
+        fillColor: surface,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        hintStyle:
+            TextStyle(color: const Color(0xFFE8E8F0).withOpacity(0.3)),
+        labelStyle:
+            TextStyle(color: const Color(0xFFE8E8F0).withOpacity(0.6)),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(24.0),
-          borderSide: BorderSide(color: const Color(0xFF111111).withOpacity(0.1), width: 1.0),
+          borderRadius: BorderRadius.circular(14.0),
+          borderSide: BorderSide(color: border, width: 1.0),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(24.0),
-          borderSide: BorderSide(color: const Color(0xFF111111).withOpacity(0.1), width: 1.0),
+          borderRadius: BorderRadius.circular(14.0),
+          borderSide: BorderSide(color: border, width: 1.0),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(24.0),
-          borderSide: const BorderSide(color: Color(0xFF111111), width: 2.0),
+          borderRadius: BorderRadius.circular(14.0),
+          borderSide: BorderSide(color: accent, width: 2.0),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14.0),
+          borderSide: const BorderSide(
+              color: Color(0xFFFF5252), width: 1.0),
+        ),
+      ),
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return Colors.white;
+          }
+          return const Color(0xFF666680);
+        }),
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return accent;
+          }
+          return const Color(0xFF333350);
+        }),
+      ),
+      sliderTheme: SliderThemeData(
+        activeTrackColor: accent,
+        inactiveTrackColor: accent.withOpacity(0.15),
+        thumbColor: accent,
+        overlayColor: accent.withOpacity(0.1),
+        trackHeight: 4,
+        thumbShape:
+            const RoundSliderThumbShape(enabledThumbRadius: 8),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: accent,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: const Color(0xFFE8E8F0),
+          side: BorderSide(color: border),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      ),
+      listTileTheme: ListTileThemeData(
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
         ),
       ),
       popupMenuTheme: PopupMenuThemeData(
-        color: const Color(0xFFFFFFFF),
-        elevation: 0,
+        color: surfaceElevated,
+        elevation: 8,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24.0),
-          side: BorderSide(color: const Color(0xFF111111).withOpacity(0.1), width: 1.0),
+          borderRadius: BorderRadius.circular(14.0),
         ),
       ),
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: surfaceElevated,
+        contentTextStyle: const TextStyle(
+          fontFamily: 'Hanken Grotesk',
+          color: Color(0xFFE8E8F0),
+          fontWeight: FontWeight.bold,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        behavior: SnackBarBehavior.floating,
+      ),
       textTheme: TextTheme(
-        headlineLarge: const TextStyle(
+        headlineLarge: TextStyle(
           fontFamily: 'Hanken Grotesk',
           fontSize: 32,
           fontWeight: FontWeight.w800,
-          color: Color(0xFF111111),
+          color: const Color(0xFFE8E8F0),
           letterSpacing: -1.0,
         ),
         headlineMedium: const TextStyle(
           fontFamily: 'Hanken Grotesk',
           fontSize: 24,
           fontWeight: FontWeight.bold,
-          color: Color(0xFF111111),
+          color: Color(0xFFE8E8F0),
           letterSpacing: -0.5,
         ),
         bodyLarge: TextStyle(
           fontFamily: 'Hanken Grotesk',
           fontSize: baseFontSize + 2,
           fontWeight: FontWeight.normal,
-          color: const Color(0xFF111111),
+          color: const Color(0xFFE8E8F0),
         ),
         bodyMedium: TextStyle(
           fontFamily: 'Hanken Grotesk',
           fontSize: baseFontSize,
           fontWeight: FontWeight.normal,
-          color: const Color(0xFF111111),
+          color: const Color(0xFFE8E8F0),
         ),
         labelLarge: const TextStyle(
           fontFamily: 'Geist',
           fontSize: 14,
           fontWeight: FontWeight.w600,
-          color: Color(0xFF111111),
+          color: Color(0xFFE8E8F0),
           letterSpacing: 0.05,
         ),
         labelSmall: const TextStyle(
           fontFamily: 'Geist',
           fontSize: 11,
           fontWeight: FontWeight.w500,
-          color: Color(0xFF111111),
+          color: Color(0xFFE8E8F0),
           letterSpacing: 0.02,
         ),
       ),
     );
   }
 
+  ThemeData _buildLightTheme(double baseFontSize) {
+    final Color accent =
+        _selectedMainColor?.shade500 ?? const Color(0xFF5B4FD6);
+    final surface = const Color(0xFFF8F9FC);
+    final surfaceElevated = const Color(0xFFFFFFFF);
+    final bg = const Color(0xFFFFFFFF);
+    final border = const Color(0xFF111111).withOpacity(0.08);
+    final textPrimary = const Color(0xFF1A1A2E);
+    final textSecondary =
+        const Color(0xFF1A1A2E).withOpacity(0.5);
 
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.light,
+      primaryColor: accent,
+      scaffoldBackgroundColor: bg,
+      dialogBackgroundColor: surfaceElevated,
+      dividerColor: border,
+      colorScheme: ColorScheme.light(
+        primary: accent,
+        onPrimary: Colors.white,
+        secondary: surface,
+        onSecondary: textPrimary,
+        tertiary: accent,
+        onTertiary: Colors.white,
+        surface: surfaceElevated,
+        onSurface: textPrimary,
+        background: bg,
+        onBackground: textPrimary,
+        error: const Color(0xFFE53935),
+      ),
+      appBarTheme: AppBarTheme(
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        backgroundColor: bg,
+        foregroundColor: textPrimary,
+        centerTitle: true,
+        iconTheme: IconThemeData(color: textPrimary),
+        titleTextStyle: TextStyle(
+          fontFamily: 'Hanken Grotesk',
+          fontSize: 20,
+          fontWeight: FontWeight.w800,
+          color: textPrimary,
+          letterSpacing: -0.5,
+        ),
+      ),
+      tabBarTheme: TabBarThemeData(
+        labelColor: accent,
+        unselectedLabelColor: textSecondary,
+        labelStyle: const TextStyle(
+          fontFamily: 'Geist',
+          fontSize: 13,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.8,
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontFamily: 'Geist',
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.8,
+        ),
+        indicatorSize: TabBarIndicatorSize.label,
+        indicator: UnderlineTabIndicator(
+          borderSide: BorderSide(color: accent, width: 3),
+          insets: const EdgeInsets.only(bottom: 0),
+        ),
+      ),
+      cardTheme: CardThemeData(
+        color: surfaceElevated,
+        elevation: 0,
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.0),
+          side: BorderSide(color: border, width: 1.0),
+        ),
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: accent,
+        foregroundColor: Colors.white,
+        elevation: 4,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.0),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: surface,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        hintStyle: TextStyle(color: textSecondary),
+        labelStyle: TextStyle(
+            color: const Color(0xFF1A1A2E).withOpacity(0.5)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14.0),
+          borderSide: BorderSide(color: border, width: 1.0),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14.0),
+          borderSide: BorderSide(color: border, width: 1.0),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14.0),
+          borderSide: BorderSide(color: accent, width: 2.0),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14.0),
+          borderSide: const BorderSide(
+              color: Color(0xFFE53935), width: 1.0),
+        ),
+      ),
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return Colors.white;
+          }
+          return Colors.grey.shade400;
+        }),
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return accent;
+          }
+          return Colors.grey.shade300;
+        }),
+      ),
+      sliderTheme: SliderThemeData(
+        activeTrackColor: accent,
+        inactiveTrackColor: accent.withOpacity(0.15),
+        thumbColor: accent,
+        overlayColor: accent.withOpacity(0.1),
+        trackHeight: 4,
+        thumbShape:
+            const RoundSliderThumbShape(enabledThumbRadius: 8),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: accent,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: textPrimary,
+          side: BorderSide(color: border),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      ),
+      listTileTheme: ListTileThemeData(
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+      popupMenuTheme: PopupMenuThemeData(
+        color: surfaceElevated,
+        elevation: 8,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14.0),
+        ),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: textPrimary,
+        contentTextStyle: const TextStyle(
+          fontFamily: 'Hanken Grotesk',
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        behavior: SnackBarBehavior.floating,
+      ),
+      textTheme: TextTheme(
+        headlineLarge: TextStyle(
+          fontFamily: 'Hanken Grotesk',
+          fontSize: 32,
+          fontWeight: FontWeight.w800,
+          color: textPrimary,
+          letterSpacing: -1.0,
+        ),
+        headlineMedium: TextStyle(
+          fontFamily: 'Hanken Grotesk',
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+          color: textPrimary,
+          letterSpacing: -0.5,
+        ),
+        bodyLarge: TextStyle(
+          fontFamily: 'Hanken Grotesk',
+          fontSize: baseFontSize + 2,
+          fontWeight: FontWeight.normal,
+          color: textPrimary,
+        ),
+        bodyMedium: TextStyle(
+          fontFamily: 'Hanken Grotesk',
+          fontSize: baseFontSize,
+          fontWeight: FontWeight.normal,
+          color: textPrimary,
+        ),
+        labelLarge: TextStyle(
+          fontFamily: 'Geist',
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: textPrimary,
+          letterSpacing: 0.05,
+        ),
+        labelSmall: TextStyle(
+          fontFamily: 'Geist',
+          fontSize: 11,
+          fontWeight: FontWeight.w500,
+          color: textPrimary,
+          letterSpacing: 0.02,
+        ),
+      ),
+    );
+  }
 }

@@ -118,7 +118,24 @@ lib/
 
    > If you already have a `google-services.json` from the Firebase Console, place it at `android/app/google-services.json`.
 
-4. **Run the app**
+4. **Enable Firebase Services**
+
+   In the [Firebase Console](https://console.firebase.google.com):
+   - Go to **Authentication** > **Sign-in method** > Enable **Email/Password**
+   - Go to **Firestore Database** > Create database (start in test mode)
+   - Set Firestore rules for development:
+     ```
+     rules_version = '2';
+     service cloud.firestore {
+       match /databases/{database}/documents {
+         match /{document=**} {
+           allow read, write: if true;
+         }
+       }
+     }
+     ```
+
+5. **Run the app**
    ```bash
    flutter run
    ```
@@ -129,8 +146,8 @@ lib/
 |----------|---------|
 | **Android APK** | `flutter build apk --release` |
 | **Android App Bundle** | `flutter build appbundle --release` |
-| **Web** | `flutter build web` |
-| **Windows** | `flutter build windows` |
+| **Web** | `flutter build web --release` |
+| **Windows** | `flutter build windows --release` |
 
 ## Firebase Configuration
 
@@ -140,26 +157,25 @@ Seyra uses the following Firebase services:
 |---------|---------|
 | **Firebase Auth** | User authentication (email/password, internally mapped from @username) |
 | **Cloud Firestore** | Messages, chats, users, call signaling, group management |
-| **Firebase Storage** | Profile pictures, chat images, file attachments, GIFs |
 
 ### Firestore Schema
 
 ```
 users/
   {uid}
-    username: "@john"
-    displayName: "John"
-    profilePic: "https://..."
-    chats: ["chatId1", "chatId2"]
-    isAnonymous: false
+    username: "@john"              # Unique @username
+    displayName: "John"            # Display name (without @)
+    profilePic: "https://..."      # Profile picture URL
+    chats: ["chatId1", "chatId2"]  # List of chat IDs
+    isAnonymous: false              # Anonymous mode flag
 
 chats/
   {chatId}
-    users: ["uid1", "uid2"]
-    type: "Private" | "Group"
-    displayName: "Group Name"
-    lastMessageAt: Timestamp
-    typingStatus: { "uid": true }
+    users: ["uid1", "uid2"]        # Participants
+    type: "Private" | "Group"      # Chat type
+    displayName: "Group Name"      # Group name
+    lastMessageAt: Timestamp       # Last message timestamp
+    typingStatus: { "uid": true }  # Typing indicators
 
 chats/{chatId}/messages/
   {messageId}
@@ -174,27 +190,106 @@ users/{uid}/calls/
     callType: "Audio" | "Video"
     direction: "Incoming" | "Outgoing"
     timestamp: Timestamp
+
+users/{uid}/Room/{roomId}          # WebRTC call signaling
+  offer / answer / callerCandidates / calleeCandidates
+
+groupCalls/{groupId}               # Group call coordination
+  participants / signals
 ```
 
 ## How Authentication Works
 
 Seyra uses a **username-based auth** system on top of Firebase:
 
-1. The user picks a `@username` (minimum 4 characters) and a password.
+1. The user picks a `@username` (minimum 4 characters, alphanumeric + underscore) and a password.
 2. Internally, the username is converted to a synthetic email: `seyra_{username}@seyra.auth`.
 3. Firebase Auth handles the actual authentication using this synthetic email.
 4. The `@username` is stored in Firestore and displayed throughout the app.
-5. Username uniqueness is checked against Firestore before account creation.
+5. **Username uniqueness** is enforced by querying Firestore before account creation.
+6. **Display names** are stored without the `@` prefix for cleaner presentation.
 
 This means **no email address or phone number is needed** to use Seyra.
 
-## Security Features
+---
 
-- **App Lock** -- Optional passcode + biometric lock on app open
-- **Panic Code** -- Enter `0000` on the lock screen to instantly wipe all data
-- **Anonymous Mode** -- Toggle to hide your identity in chats
-- **Chat Deletion** -- Delete individual messages or entire chat histories
-- **Profile Purge** -- Remove your profile from the network
+## Security
+
+### Authentication & Identity
+
+| Feature | Description |
+|---------|-------------|
+| **Username-based auth** | Users authenticate with `@username` + password. No email or phone number is collected or stored. |
+| **Synthetic email mapping** | Usernames are converted to internal emails (`seyra_{name}@seyra.auth`) so Firebase Auth handles credentials without exposing real emails. |
+| **Unique username enforcement** | Firestore query checks username uniqueness before account creation. Each `@username` is globally unique. |
+| **Password hashing** | Passwords are hashed and managed by Firebase Auth (bcrypt + salting). Plaintext passwords are never stored. |
+
+### App Lock & Data Protection
+
+| Feature | Description |
+|---------|-------------|
+| **Passcode lock** | Optional 4-digit passcode required on app open. Stored in Flutter Secure Storage (hardware-backed encryption). |
+| **Biometric lock** | Fingerprint / Face ID unlock on supported devices. |
+| **Panic wipe** | Entering `0000` on the lock screen instantly wipes all local data (Hive, SharedPreferences, Secure Storage) and signs out. |
+| **Secure Storage** | Sensitive data (passcodes) stored via `flutter_secure_storage`, which uses Keychain (iOS), KeyStore (Android), and similar OS-level encryption on other platforms. |
+
+### Messaging & Calls
+
+| Feature | Description |
+|---------|-------------|
+| **Message deletion** | Users can unsend/delete individual messages for all participants. |
+| **Chat history removal** | Entire chat histories can be permanently deleted. |
+| **Secure identity purge** | Cryptographic keys and chat documents can be deleted to break encrypted channels. |
+| **WebRTC calls** | Audio/video calls use WebRTC with STUN/TURN servers for NAT traversal. Call signaling is encrypted via Firestore. |
+| **Typing indicators** | Real-time typing status without exposing message content. |
+
+### Data Minimization
+
+| Principle | Implementation |
+|-----------|---------------|
+| **No phone numbers** | Auth is username-only; phone contacts are matched locally but never uploaded. |
+| **No email collection** | Synthetic emails are internal only; users never see or provide real email addresses. |
+| **Anonymous mode** | Users can toggle anonymous mode to hide their identity in chats. |
+| **Local-first contacts** | Device contacts are matched against Firestore user records locally; raw contact data is not stored on the server. |
+
+### Firestore Security Rules (Production)
+
+For production, use restrictive Firestore rules:
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    match /chats/{chatId} {
+      allow read, write: if request.auth != null
+        && request.auth.uid in resource.data.users;
+      allow create: if request.auth != null;
+    }
+    match /chats/{chatId}/messages/{messageId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow delete: if request.auth != null
+        && request.auth.uid == resource.data.senderId;
+    }
+  }
+}
+```
+
+### Production Checklist
+
+- [ ] Set Firestore rules to authenticated-only access
+- [ ] Enable Firebase App Check to prevent abuse
+- [ ] Set up Firestore indexes for common queries
+- [ ] Configure Firebase Security Rules for Storage (if used)
+- [ ] Enable Firebase Auth email verification (optional)
+- [ ] Review and restrict CORS policies for web deployment
+- [ ] Set up monitoring and alerting in Firebase Console
+
+---
 
 ## Contributing
 

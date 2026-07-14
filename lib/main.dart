@@ -91,7 +91,10 @@ class MyApp extends StatelessWidget {
                                   ConnectionState.waiting
                               ? Scaffold(
                                   body: Center(
-                                    child: CircularProgressIndicator.adaptive(),
+                                    child: Image.asset(
+                                      'assets/images/splash_logo.png',
+                                      height: 60,
+                                    ),
                                   ),
                                 )
                               : userSnapshot.hasData

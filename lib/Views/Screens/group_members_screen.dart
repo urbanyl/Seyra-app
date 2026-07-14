@@ -80,13 +80,14 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
   }
 
   Future<void> _removeMember(String memberUid, String memberName) async {
+    final theme = Theme.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFFFFFFFF),
+        backgroundColor: theme.scaffoldBackgroundColor,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
-          side: const BorderSide(color: Color(0xFF111111), width: 2),
+          side: BorderSide(color: theme.colorScheme.onSurface, width: 2),
         ),
         title: const Text(
           'Remove Member',
@@ -103,12 +104,12 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text(
+            child: Text(
               'Cancel',
               style: TextStyle(
                 fontFamily: 'Hanken Grotesk',
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF111111),
+                color: theme.colorScheme.onSurface,
               ),
             ),
           ),
@@ -150,14 +151,14 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
           SnackBar(
             content: Text(
               '$memberName has been removed.',
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Hanken Grotesk',
                 fontSize: 12.5,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFFFFFFFF),
+                color: theme.scaffoldBackgroundColor,
               ),
             ),
-            backgroundColor: const Color(0xFF111111),
+            backgroundColor: theme.colorScheme.onSurface,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -170,7 +171,6 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
                 fontFamily: 'Hanken Grotesk',
                 fontSize: 12.5,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFFFFFFFF),
               ),
             ),
             backgroundColor: Colors.redAccent,
@@ -182,6 +182,7 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
   }
 
   Future<void> _addMember(String memberUid, String memberName) async {
+    final theme = Theme.of(context);
     try {
       // Add to chat's users array
       await FirebaseFirestore.instance.collection('chats').doc(_docId).update({
@@ -197,14 +198,14 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
         SnackBar(
           content: Text(
             '$memberName added successfully.',
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Hanken Grotesk',
               fontSize: 12.5,
               fontWeight: FontWeight.bold,
-              color: Color(0xFFFFFFFF),
+              color: theme.scaffoldBackgroundColor,
             ),
           ),
-          backgroundColor: const Color(0xFF111111),
+          backgroundColor: theme.colorScheme.onSurface,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -217,7 +218,6 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
               fontFamily: 'Hanken Grotesk',
               fontSize: 12.5,
               fontWeight: FontWeight.bold,
-              color: Color(0xFFFFFFFF),
             ),
           ),
           backgroundColor: Colors.redAccent,
@@ -228,10 +228,11 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
   }
 
   void _showAddMemberBottomSheet(List<dynamic> existingMembers) {
+    final theme = Theme.of(context);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFFFFFFFF),
+      backgroundColor: theme.scaffoldBackgroundColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(32),
@@ -290,14 +291,14 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  const Text(
+                  Text(
                     'ADD GROUP MEMBER',
                     style: TextStyle(
                       fontFamily: 'Geist',
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1.5,
-                      color: Color(0xFF111111),
+                      color: theme.colorScheme.onSurface,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -308,11 +309,11 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
                         _filterContacts(val);
                       });
                     },
-                    cursorColor: const Color(0xFF111111),
+                    cursorColor: theme.colorScheme.onSurface,
                     style: const TextStyle(fontFamily: 'Hanken Grotesk'),
                     decoration: InputDecoration(
                       hintText: 'Search contacts...',
-                      prefixIcon: const Icon(Icons.search, color: Color(0xFF111111)),
+                      prefixIcon: Icon(Icons.search, color: theme.colorScheme.onSurface),
                       filled: true,
                       fillColor: const Color(0xFFF9F9F9),
                       contentPadding: const EdgeInsets.symmetric(vertical: 14),
@@ -322,7 +323,7 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(24),
-                        borderSide: const BorderSide(color: Color(0xFF111111), width: 2),
+                        borderSide: BorderSide(color: theme.colorScheme.onSurface, width: 2),
                       ),
                     ),
                   ),
@@ -330,9 +331,9 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
                   Container(
                     constraints: const BoxConstraints(maxHeight: 300),
                     child: _isLoadingContacts
-                        ? const Center(
+                        ? Center(
                             child: CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF111111)),
+                              valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.onSurface),
                             ),
                           )
                         : filteredEligible.isEmpty
@@ -355,7 +356,7 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
                                   return Container(
                                     margin: const EdgeInsets.only(bottom: 12),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFFFFFFF),
+                                      color: theme.scaffoldBackgroundColor,
                                       borderRadius: BorderRadius.circular(16),
                                       border: Border.all(
                                         color: const Color(0xFFEEEEEE),
@@ -386,8 +387,8 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
                                       ),
                                       trailing: ElevatedButton(
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color(0xFF111111),
-                                          foregroundColor: const Color(0xFFFFFFFF),
+                                          backgroundColor: theme.colorScheme.onSurface,
+                                          foregroundColor: theme.scaffoldBackgroundColor,
                                           shape: RoundedRectangleBorder(
                                             borderRadius: BorderRadius.circular(16),
                                           ),
@@ -422,13 +423,14 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
   }
 
   Future<void> _leaveGroup() async {
+    final theme = Theme.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFFFFFFFF),
+        backgroundColor: theme.scaffoldBackgroundColor,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
-          side: const BorderSide(color: Color(0xFF111111), width: 2),
+          side: BorderSide(color: theme.colorScheme.onSurface, width: 2),
         ),
         title: const Text(
           'Leave Group',
@@ -445,12 +447,12 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text(
+            child: Text(
               'Cancel',
               style: TextStyle(
                 fontFamily: 'Hanken Grotesk',
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF111111),
+                color: theme.colorScheme.onSurface,
               ),
             ),
           ),
@@ -489,17 +491,17 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
               'You have left the group.',
               style: TextStyle(
                 fontFamily: 'Hanken Grotesk',
                 fontSize: 12.5,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFFFFFFFF),
+                color: theme.scaffoldBackgroundColor,
               ),
             ),
-            backgroundColor: Color(0xFF111111),
+            backgroundColor: theme.colorScheme.onSurface,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -515,7 +517,6 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
                 fontFamily: 'Hanken Grotesk',
                 fontSize: 12.5,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFFFFFFFF),
               ),
             ),
             backgroundColor: Colors.redAccent,
@@ -528,27 +529,28 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final routeArgs = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
     _docId = routeArgs['docId']!;
     _groupName = routeArgs['displayName']!;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFFFF),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFFFFFF),
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF111111)),
+          icon: Icon(Icons.arrow_back, color: theme.colorScheme.onSurface),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
           'MEMBERS: ${_groupName.toUpperCase()}',
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Geist',
             fontSize: 14,
             fontWeight: FontWeight.bold,
             letterSpacing: 1.0,
-            color: Color(0xFF111111),
+            color: theme.colorScheme.onSurface,
           ),
         ),
       ),
@@ -556,9 +558,9 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
         stream: FirebaseFirestore.instance.collection('chats').doc(_docId).snapshots(),
         builder: (context, chatSnapshot) {
           if (chatSnapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
+            return Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF111111)),
+                valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.onSurface),
               ),
             );
           }
@@ -581,9 +583,9 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
             stream: FirebaseFirestore.instance.collection('users').snapshots(),
             builder: (context, usersSnapshot) {
               if (usersSnapshot.connectionState == ConnectionState.waiting) {
-                return const Center(
+                return Center(
                   child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF111111)),
+                    valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.onSurface),
                   ),
                 );
               }
@@ -611,10 +613,10 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
                         return Container(
                           margin: const EdgeInsets.only(bottom: 16),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFFFFFF),
+                            color: theme.scaffoldBackgroundColor,
                             borderRadius: BorderRadius.circular(24),
                             border: Border.all(
-                              color: const Color(0xFF111111),
+                              color: theme.colorScheme.onSurface,
                               width: 2.0,
                             ),
                           ),
@@ -630,11 +632,11 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
                                 Expanded(
                                   child: Text(
                                     name,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontFamily: 'Hanken Grotesk',
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16,
-                                      color: Color(0xFF111111),
+                                      color: theme.colorScheme.onSurface,
                                     ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -644,16 +646,16 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF111111),
+                                      color: theme.colorScheme.onSurface,
                                       borderRadius: BorderRadius.circular(8),
                                     ),
-                                    child: const Text(
+                                    child: Text(
                                       'ADMIN',
                                       style: TextStyle(
                                         fontFamily: 'Geist',
                                         fontSize: 9,
                                         fontWeight: FontWeight.bold,
-                                        color: Color(0xFF2B54ED),
+                                        color: theme.colorScheme.tertiary,
                                       ),
                                     ),
                                   ),
@@ -689,15 +691,15 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
                             height: 52,
                             child: ElevatedButton.icon(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF111111),
-                                foregroundColor: const Color(0xFFFFFFFF),
+                                backgroundColor: theme.colorScheme.onSurface,
+                                foregroundColor: theme.scaffoldBackgroundColor,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(24),
                                 ),
                                 elevation: 0,
                               ),
                               onPressed: () => _showAddMemberBottomSheet(memberUids),
-                              icon: const Icon(Icons.person_add_outlined, color: Color(0xFF2B54ED)),
+                              icon: Icon(Icons.person_add_outlined, color: theme.colorScheme.tertiary),
                               label: const Text(
                                 'ADD NEW MEMBER',
                                 style: TextStyle(

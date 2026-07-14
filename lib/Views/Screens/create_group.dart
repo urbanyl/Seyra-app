@@ -1,13 +1,9 @@
 import 'dart:async';
-import 'package:seyra/Models/user.dart';
+import 'package:seyra/Views/Screens/chat_screen.dart';
 import 'package:seyra/Views/Widgets/neon_avatar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_contacts/flutter_contacts.dart';
-import 'package:provider/provider.dart';
-
-import 'chat_screen.dart';
 
 class CreateGroupPage extends StatefulWidget {
   static const ROUTE_NAME = '/create_group';
@@ -17,93 +13,69 @@ class CreateGroupPage extends StatefulWidget {
 }
 
 class _CreateGroupPageState extends State<CreateGroupPage> {
-  final TextEditingController _groupNameController = TextEditingController();
-  final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _groupNameController =
+      TextEditingController();
+  final TextEditingController _searchController =
+      TextEditingController();
 
-  bool _isLoading = true;
   bool _isCreating = false;
-  List<Contact> _contacts = [];
-  List<Contact> _filteredContacts = [];
-  Map<String, Map<String, dynamic>> _registeredUsersByPhone = {};
-  final String _currentUid = FirebaseAuth.instance.currentUser!.uid;
+  List<Map<String, dynamic>> _allUsers = [];
+  List<Map<String, dynamic>> _filteredUsers = [];
+  final String _currentUid =
+      FirebaseAuth.instance.currentUser!.uid;
 
-  // Selected user IDs → display name mapping
   final Map<String, String> _selectedUsers = {};
-
-  StreamSubscription<QuerySnapshot>? _usersSubscription;
 
   @override
   void initState() {
     super.initState();
-    _loadContactsAndUsers();
+    _loadUsers();
   }
 
   @override
   void dispose() {
     _groupNameController.dispose();
     _searchController.dispose();
-    _usersSubscription?.cancel();
     super.dispose();
   }
 
-  String _normalizePhone(String raw) {
-    String clean = raw.replaceAll(RegExp(r'[^\d+]'), '');
-    if (clean.startsWith('0') && clean.length == 10) {
-      clean = '+213' + clean.substring(1);
-    }
-    return clean;
-  }
-
-  Future<void> _loadContactsAndUsers() async {
-    if (!mounted) return;
-    setState(() => _isLoading = true);
-
+  Future<void> _loadUsers() async {
     try {
-      if (await FlutterContacts.requestPermission()) {
-        _contacts = await FlutterContacts.getContacts(withProperties: true);
-      }
-      _contacts = _contacts.where((c) => c.phones.isNotEmpty).toList();
-      _filteredContacts = List.from(_contacts);
-
-      _usersSubscription?.cancel();
-      _usersSubscription = FirebaseFirestore.instance
-          .collection('users')
-          .snapshots()
-          .listen((snapshot) {
-        if (!mounted) return;
-        setState(() {
-          _registeredUsersByPhone.clear();
-          for (var doc in snapshot.docs) {
-            if (doc.id == _currentUid) continue;
-            final data = doc.data();
-            final userUsername = data['username'] ?? '';
-            if (userUsername.isNotEmpty) {
-              _registeredUsersByPhone[userUsername] = {
-                'uid': doc.id,
-                'displayName': data['displayName'] ?? '',
-                'profilePic': data['profilePic'] ?? '',
-              };
-            }
-          }
+      final snapshot =
+          await FirebaseFirestore.instance.collection('users').get();
+      final users = <Map<String, dynamic>>[];
+      for (var doc in snapshot.docs) {
+        if (doc.id == _currentUid) continue;
+        final data = doc.data();
+        users.add({
+          'uid': doc.id,
+          'username': data['username'] ?? '',
+          'displayName': data['displayName'] ?? '',
+          'profilePic': data['profilePic'] ?? '',
         });
-      });
-    } catch (e) {
-
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+      }
+      if (mounted) {
+        setState(() {
+          _allUsers = users;
+          _filteredUsers = List.from(users);
+        });
+      }
+    } catch (_) {}
   }
 
   void _filterContacts(String query) {
     setState(() {
       if (query.isEmpty) {
-        _filteredContacts = List.from(_contacts);
+        _filteredUsers = List.from(_allUsers);
       } else {
-        _filteredContacts = _contacts
-            .where((c) =>
-                c.displayName.toLowerCase().contains(query.toLowerCase()) ||
-                c.phones.any((p) => p.number.contains(query)))
-            .toList();
+        final q = query.toLowerCase();
+        _filteredUsers = _allUsers.where((user) {
+          final username =
+              (user['username'] ?? '').toString().toLowerCase();
+          final displayName =
+              (user['displayName'] ?? '').toString().toLowerCase();
+          return username.contains(q) || displayName.contains(q);
+        }).toList();
       }
     });
   }
@@ -119,20 +91,21 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
   }
 
   Future<void> _createGroup() async {
+    final theme = Theme.of(context);
     final groupName = _groupNameController.text.trim();
     if (groupName.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
             'Please enter a group name.',
             style: TextStyle(
               fontFamily: 'Hanken Grotesk',
               fontSize: 12.5,
               fontWeight: FontWeight.bold,
-              color: Color(0xFFFFFFFF),
+              color: theme.scaffoldBackgroundColor,
             ),
           ),
-          backgroundColor: Color(0xFF111111),
+          backgroundColor: theme.colorScheme.onSurface,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -140,17 +113,17 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
     }
     if (_selectedUsers.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'Please select at least one contact.',
+            'Please select at least one user.',
             style: TextStyle(
               fontFamily: 'Hanken Grotesk',
               fontSize: 12.5,
               fontWeight: FontWeight.bold,
-              color: Color(0xFFFFFFFF),
+              color: theme.scaffoldBackgroundColor,
             ),
           ),
-          backgroundColor: Color(0xFF111111),
+          backgroundColor: theme.colorScheme.onSurface,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -160,7 +133,10 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
     setState(() => _isCreating = true);
 
     try {
-      final allUserIds = [_currentUid, ..._selectedUsers.keys.toList()];
+      final allUserIds = [
+        _currentUid,
+        ..._selectedUsers.keys.toList()
+      ];
 
       final docRef =
           await FirebaseFirestore.instance.collection('chats').add({
@@ -173,12 +149,13 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
         'lastMessageAt': FieldValue.serverTimestamp(),
       });
 
-      // Link chat ID to all members
       for (final uid in allUserIds) {
         await FirebaseFirestore.instance
             .collection('users')
             .doc(uid)
-            .update({'chats': FieldValue.arrayUnion([docRef.id])});
+            .update({
+          'chats': FieldValue.arrayUnion([docRef.id])
+        });
       }
 
       if (mounted) {
@@ -194,21 +171,22 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Unable to create group. Please check your internet connection.',
-            style: TextStyle(
-              fontFamily: 'Hanken Grotesk',
-              fontSize: 12.5,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFFFFFFFF),
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Unable to create group.',
+              style: TextStyle(
+                fontFamily: 'Hanken Grotesk',
+                fontSize: 12.5,
+                fontWeight: FontWeight.bold,
+              ),
             ),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
           ),
-          backgroundColor: Colors.redAccent,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+        );
+      }
     } finally {
       if (mounted) setState(() => _isCreating = false);
     }
@@ -217,365 +195,431 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFFFF),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFFFFFF),
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF111111)),
+          icon: Icon(Icons.arrow_back,
+              color: theme.colorScheme.onSurface),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           'NEW GROUP',
           style: TextStyle(
             fontFamily: 'Hanken Grotesk',
             fontWeight: FontWeight.w900,
             fontSize: 18,
             letterSpacing: 0.5,
-            color: Color(0xFF111111),
+            color: theme.colorScheme.onSurface,
           ),
         ),
-        centerTitle: true,
-        actions: [
-          if (_selectedUsers.isNotEmpty)
+      ),
+      body: SafeArea(
+        child: Column(
+          children: [
             Padding(
-              padding: const EdgeInsets.only(right: 8.0),
-              child: Center(
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2B54ED),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                        color: const Color(0xFF111111), width: 1.5),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: TextField(
+                controller: _groupNameController,
+                maxLength: 30,
+                style: TextStyle(
+                  fontFamily: 'Hanken Grotesk',
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onSurface,
+                ),
+                decoration: InputDecoration(
+                  counterText: '',
+                  hintText: 'Group name...',
+                  prefixIcon: Icon(Icons.group_outlined,
+                      color: theme.colorScheme.onSurface,
+                      size: 20),
+                  hintStyle: TextStyle(
+                    fontFamily: 'Hanken Grotesk',
+                    color: theme.colorScheme.onSurface
+                        .withOpacity(0.35),
+                    fontSize: 15,
                   ),
-                  child: Text(
-                    '${_selectedUsers.length} selected',
-                    style: const TextStyle(
-                      fontFamily: 'Hanken Grotesk',
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                      color: Color(0xFF111111),
-                    ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24.0),
+                    borderSide: BorderSide(
+                        color: theme.colorScheme.tertiary,
+                        width: 1.5),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24.0),
+                    borderSide: BorderSide(
+                        color: theme.colorScheme.tertiary,
+                        width: 2.0),
                   ),
                 ),
               ),
             ),
-        ],
-      ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF111111)),
-            )
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ── Group Name Field ──────────────────────────────────────
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                  child: TextField(
-                    controller: _groupNameController,
-                    cursorColor: const Color(0xFF111111),
-                    maxLength: 35,
-                    style: const TextStyle(
-                      fontFamily: 'Hanken Grotesk',
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: Color(0xFF111111),
-                    ),
-                    decoration: InputDecoration(
-                      hintText: 'Group name...',
-                      prefixIcon: const Icon(Icons.group_outlined,
-                          color: Color(0xFF111111), size: 20),
-                      counterText: '',
-                      hintStyle: TextStyle(
-                        fontFamily: 'Hanken Grotesk',
-                        color: const Color(0xFF111111).withValues(alpha: 0.35),
-                        fontSize: 15,
+
+            if (_selectedUsers.isNotEmpty)
+              SizedBox(
+                height: 60,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 8),
+                  itemCount: _selectedUsers.length,
+                  itemBuilder: (context, index) {
+                    final uid =
+                        _selectedUsers.keys.elementAt(index);
+                    final name = _selectedUsers[uid]!;
+                    return Padding(
+                      padding:
+                          const EdgeInsets.only(right: 8),
+                      child: GestureDetector(
+                        onTap: () =>
+                            _toggleUser(uid, name),
+                        child: Container(
+                          padding:
+                              const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6),
+                          decoration: BoxDecoration(
+                            color: theme
+                                .colorScheme.tertiary,
+                            borderRadius:
+                                BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize:
+                                MainAxisSize.min,
+                            children: [
+                              Text(
+                                name,
+                                style: TextStyle(
+                                  fontFamily:
+                                      'Hanken Grotesk',
+                                  fontWeight:
+                                      FontWeight.bold,
+                                  fontSize: 12,
+                                  color: theme.brightness ==
+                                          Brightness
+                                              .dark
+                                      ? Colors.black
+                                      : Colors.white,
+                                ),
+                              ),
+                              const SizedBox(
+                                  width: 6),
+                              Icon(Icons.close,
+                                  size: 14,
+                                  color: theme.brightness ==
+                                          Brightness
+                                              .dark
+                                      ? Colors.black
+                                      : Colors.white),
+                            ],
+                          ),
+                        ),
                       ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24.0),
-                        borderSide: const BorderSide(color: Color(0xFF2B54ED), width: 1.5),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24.0),
-                        borderSide: const BorderSide(color: Color(0xFF2B54ED), width: 2.0),
-                      ),
-                    ),
+                    );
+                  },
+                ),
+              ),
+
+            Padding(
+              padding:
+                  const EdgeInsets.fromLTRB(16, 8, 16, 4),
+              child: TextField(
+                controller: _searchController,
+                onChanged: _filterContacts,
+                style: TextStyle(
+                  fontFamily: 'Hanken Grotesk',
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onSurface,
+                ),
+                decoration: InputDecoration(
+                  hintText:
+                      'Search by @username or name...',
+                  prefixIcon: Icon(Icons.search_rounded,
+                      color: theme.colorScheme.onSurface),
+                  suffixIcon: _searchController
+                          .text.isNotEmpty
+                      ? IconButton(
+                          icon: Icon(
+                              Icons.clear_rounded,
+                              color: theme
+                                  .colorScheme
+                                  .onSurface),
+                          onPressed: () {
+                            _searchController.clear();
+                            _filterContacts('');
+                          },
+                        )
+                      : null,
+                ),
+              ),
+            ),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0, vertical: 6.0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'SELECT MEMBERS',
+                  style: TextStyle(
+                    fontFamily: 'Geist',
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.2,
+                    color: theme.colorScheme.onSurface
+                        .withOpacity(0.5),
                   ),
                 ),
+              ),
+            ),
 
-                // ── Selected Members Chips ────────────────────────────────
-                if (_selectedUsers.isNotEmpty)
-                  SizedBox(
-                    height: 60,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
-                      itemCount: _selectedUsers.length,
+            Expanded(
+              child: _filteredUsers.isEmpty
+                  ? Center(
+                      child: Text(
+                        'No users found.',
+                        style: TextStyle(
+                          fontFamily: 'Hanken Grotesk',
+                          color: theme
+                              .colorScheme.onSurface
+                              .withOpacity(0.5),
+                          fontSize: 15,
+                        ),
+                      ),
+                    )
+                  : ListView.builder(
+                      padding:
+                          const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 4),
+                      itemCount:
+                          _filteredUsers.length,
                       itemBuilder: (context, index) {
-                        final uid =
-                            _selectedUsers.keys.elementAt(index);
-                        final name = _selectedUsers[uid]!;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: GestureDetector(
-                            onTap: () => _toggleUser(uid, name),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF2B54ED),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                    color: const Color(0xFF111111),
-                                    width: 1.5),
+                        final user =
+                            _filteredUsers[index];
+                        final uid = user['uid'];
+                        final displayName =
+                            user['displayName'] ?? '';
+                        final username =
+                            user['username'] ?? '';
+                        final isSelected =
+                            _selectedUsers
+                                .containsKey(uid);
+
+                        return GestureDetector(
+                          onTap: () => _toggleUser(
+                              uid,
+                              displayName.isNotEmpty
+                                  ? displayName
+                                  : username),
+                          child:
+                              AnimatedContainer(
+                            duration: const Duration(
+                                milliseconds: 200),
+                            padding:
+                                const EdgeInsets.all(12),
+                            margin: const EdgeInsets
+                                .symmetric(
+                                vertical: 5),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? theme
+                                      .colorScheme
+                                      .tertiary
+                                      .withOpacity(
+                                          0.15)
+                                  : theme
+                                      .scaffoldBackgroundColor,
+                              borderRadius:
+                                  BorderRadius
+                                      .circular(16),
+                              border: Border.all(
+                                color: isSelected
+                                    ? theme
+                                        .colorScheme
+                                        .tertiary
+                                    : theme
+                                        .dividerColor,
+                                width:
+                                    isSelected ? 2 : 1,
                               ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    name.split(' ').first,
-                                    style: const TextStyle(
-                                      fontFamily: 'Hanken Grotesk',
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                      color: Color(0xFF111111),
+                            ),
+                            child: Row(
+                              children: [
+                                NeonAvatar(
+                                  displayName:
+                                      displayName
+                                              .isNotEmpty
+                                          ? displayName
+                                          : username,
+                                  size: 44,
+                                ),
+                                const SizedBox(
+                                    width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment
+                                            .start,
+                                    children: [
+                                      Text(
+                                        displayName
+                                                .isNotEmpty
+                                            ? displayName
+                                            : 'New User',
+                                        style:
+                                            TextStyle(
+                                          fontFamily:
+                                              'Hanken Grotesk',
+                                          fontWeight:
+                                              FontWeight
+                                                  .bold,
+                                          fontSize: 15,
+                                          color: theme
+                                              .colorScheme
+                                              .onSurface,
+                                        ),
+                                        maxLines: 1,
+                                        overflow:
+                                            TextOverflow
+                                                .ellipsis,
+                                      ),
+                                      if (username
+                                          .isNotEmpty) ...[
+                                        const SizedBox(
+                                            height: 2),
+                                        Text(
+                                          username,
+                                          style:
+                                              TextStyle(
+                                            fontFamily:
+                                                'Geist',
+                                            color: theme
+                                                .colorScheme
+                                                .onSurface
+                                                .withOpacity(
+                                                    0.45),
+                                            fontSize:
+                                                12,
+                                          ),
+                                          maxLines: 1,
+                                          overflow:
+                                              TextOverflow
+                                                  .ellipsis,
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                                AnimatedContainer(
+                                  duration:
+                                      const Duration(
+                                          milliseconds:
+                                              200),
+                                  width: 28,
+                                  height: 28,
+                                  decoration:
+                                      BoxDecoration(
+                                    color: isSelected
+                                        ? theme
+                                            .colorScheme
+                                            .tertiary
+                                        : Colors
+                                            .transparent,
+                                    shape: BoxShape
+                                        .circle,
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? theme
+                                              .colorScheme
+                                              .tertiary
+                                          : theme
+                                              .colorScheme
+                                              .onSurface
+                                              .withOpacity(
+                                                  0.2),
+                                      width: 1.5,
                                     ),
                                   ),
-                                  const SizedBox(width: 6),
-                                  const Icon(Icons.close,
-                                      size: 14, color: Color(0xFF111111)),
-                                ],
-                              ),
+                                  child: isSelected
+                                      ? Icon(
+                                          Icons.check,
+                                          size: 16,
+                                          color: theme.brightness ==
+                                                  Brightness
+                                                      .dark
+                                              ? Colors
+                                                  .black
+                                              : Colors
+                                                  .white,
+                                        )
+                                      : null,
+                                ),
+                              ],
                             ),
                           ),
                         );
                       },
                     ),
-                  ),
+            ),
 
-                // ── Search Bar ─────────────────────────────────────────────
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-                  child: TextField(
-                    controller: _searchController,
-                    onChanged: _filterContacts,
-                    style: const TextStyle(
-                      fontFamily: 'Hanken Grotesk',
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF111111),
-                    ),
-                    decoration: InputDecoration(
-                      hintText: 'Search contacts...',
-                      prefixIcon: const Icon(Icons.search_rounded,
-                          color: Color(0xFF111111)),
-                      suffixIcon: _searchController.text.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear_rounded,
-                                  color: Color(0xFF111111)),
-                              onPressed: () {
-                                _searchController.clear();
-                                _filterContacts('');
-                              },
-                            )
-                          : null,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                  16, 8, 16, 24),
+              child: SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: ElevatedButton(
+                  onPressed:
+                      _isCreating ? null : _createGroup,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        theme.colorScheme.tertiary,
+                    foregroundColor: theme.brightness ==
+                            Brightness.dark
+                        ? Colors.black
+                        : Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(16),
                     ),
                   ),
-                ),
-
-                // ── Contacts List ─────────────────────────────────────────
-                const Padding(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
-                  child: Text(
-                    'SELECT MEMBERS',
-                    style: TextStyle(
-                      fontFamily: 'Geist',
-                      fontSize: 11,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 1.2,
-                      color: Color(0xFF111111),
-                    ),
-                  ),
-                ),
-
-                Expanded(
-                  child: _filteredContacts.isEmpty
-                      ? Center(
-                          child: Text(
-                            'No contacts found.',
-                            style: TextStyle(
-                              fontFamily: 'Hanken Grotesk',
-                              color:
-                                  const Color(0xFF111111).withOpacity(0.5),
-                              fontSize: 15,
-                            ),
+                  child: _isCreating
+                      ? SizedBox(
+                          width: 20,
+                          height: 20,
+                          child:
+                              CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: theme.brightness ==
+                                    Brightness.dark
+                                ? Colors.black
+                                : Colors.white,
                           ),
                         )
-                      : ListView.builder(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 4),
-                          itemCount: _filteredContacts.length,
-                          itemBuilder: (context, index) {
-                            final contact = _filteredContacts[index];
-                            final phoneRaw = contact.phones.first.number;
-                            final normalized = _normalizePhone(phoneRaw);
-                            final isRegistered =
-                                _registeredUsersByPhone.containsKey(normalized);
-
-                            if (!isRegistered) return const SizedBox.shrink();
-
-                            final firestoreUser =
-                                _registeredUsersByPhone[normalized]!;
-                            final uid = firestoreUser['uid'] as String;
-                            final displayName =
-                                (firestoreUser['displayName'] as String)
-                                        .trim()
-                                        .isNotEmpty
-                                    ? firestoreUser['displayName'] as String
-                                    : contact.displayName;
-
-                            final isSelected =
-                                _selectedUsers.containsKey(uid);
-
-                            return GestureDetector(
-                              onTap: () => _toggleUser(uid, displayName),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                padding: const EdgeInsets.all(12),
-                                margin: const EdgeInsets.symmetric(vertical: 5),
-                                decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? const Color(0xFF2B54ED)
-                                          .withOpacity(0.15)
-                                      : const Color(0xFFFFFFFF),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                    color: isSelected
-                                        ? const Color(0xFF2B54ED)
-                                        : const Color(0xFF111111)
-                                            .withOpacity(0.08),
-                                    width: isSelected ? 2 : 1,
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    NeonAvatar(
-                                      displayName: displayName,
-                                      size: 44,
-                                    ),
-                                    const SizedBox(width: 14),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            displayName,
-                                            style: const TextStyle(
-                                              fontFamily: 'Hanken Grotesk',
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 15,
-                                              color: Color(0xFF111111),
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            phoneRaw,
-                                            style: const TextStyle(
-                                              fontFamily: 'Geist',
-                                              color: Color(0xFF747878),
-                                              fontSize: 12,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    AnimatedContainer(
-                                      duration:
-                                          const Duration(milliseconds: 200),
-                                      width: 28,
-                                      height: 28,
-                                      decoration: BoxDecoration(
-                                        color: isSelected
-                                            ? const Color(0xFF2B54ED)
-                                            : Colors.transparent,
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: isSelected
-                                              ? const Color(0xFF111111)
-                                              : const Color(0xFF111111)
-                                                  .withOpacity(0.25),
-                                          width: 1.5,
-                                        ),
-                                      ),
-                                      child: isSelected
-                                          ? const Icon(Icons.check,
-                                              size: 16,
-                                              color: Color(0xFF111111))
-                                          : null,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
+                      : const Text(
+                          'CREATE GROUP',
+                          style: TextStyle(
+                            fontFamily:
+                                'Hanken Grotesk',
+                            fontWeight: FontWeight.w900,
+                            fontSize: 15,
+                            letterSpacing: 0.5,
+                          ),
                         ),
                 ),
-
-                // ── Create Button ─────────────────────────────────────────
-                Padding(
-                  padding:
-                      const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 54,
-                    child: ElevatedButton(
-                      onPressed: _isCreating ? null : _createGroup,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2B54ED),
-                        foregroundColor: const Color(0xFF111111),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          side: const BorderSide(
-                              color: Color(0xFF111111), width: 1.5),
-                        ),
-                      ),
-                      child: _isCreating
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Color(0xFF111111),
-                              ),
-                            )
-                          : const Text(
-                              'CREATE GROUP',
-                              style: TextStyle(
-                                fontFamily: 'Hanken Grotesk',
-                                fontWeight: FontWeight.w900,
-                                fontSize: 15,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
+          ],
+        ),
+      ),
     );
   }
 }

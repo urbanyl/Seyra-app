@@ -196,14 +196,10 @@ class _CallsListWidgetState extends State<CallsListWidget> {
       stream: query.snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting && _limit == 15) {
-          return const Center(
-            child: CircularProgressIndicator.adaptive(),
-          );
+          return const SizedBox.shrink();
         }
         if (!snapshot.hasData || snapshot.data == null) {
-          return const Center(
-            child: CircularProgressIndicator.adaptive(),
-          );
+          return const SizedBox.shrink();
         }
 
         final docs = snapshot.data!.docs;
