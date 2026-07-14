@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -24,35 +26,79 @@ class ChatBubble extends StatelessWidget {
     this.senderName = '',
   });
 
-  Future<void> _downloadImage(BuildContext context, String url) async {
+  bool get _isDataUri => chatMedia.startsWith('data:');
+
+  bool get _isImageMedia {
+    if (_isDataUri) {
+      return chatMedia.startsWith('data:image/');
+    }
+    final lower = chatMedia.toLowerCase();
+    return lower.endsWith('.png') ||
+        lower.endsWith('.jpg') ||
+        lower.endsWith('.jpeg') ||
+        lower.endsWith('.gif') ||
+        lower.contains('/chats/images/') ||
+        lower.contains('/chats/gifs/');
+  }
+
+  String _dataUriFileName() {
+    if (!_isDataUri) return '';
+    final match = RegExp(r'name=([^;]+)').firstMatch(chatMedia);
+    if (match != null) return match.group(1)!;
+    if (chatMedia.startsWith('data:image/gif')) return 'gif.gif';
+    if (chatMedia.startsWith('data:image/')) return 'image.jpg';
+    return 'file';
+  }
+
+  Uint8List? _decodeBase64() {
+    if (!_isDataUri) return null;
+    try {
+      final commaIdx = chatMedia.indexOf(',');
+      if (commaIdx == -1) return null;
+      return base64Decode(chatMedia.substring(commaIdx + 1));
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _downloadImage(BuildContext context) async {
     if (kIsWeb) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Download not supported on web in this build.'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Download not supported on web.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
       return;
     }
 
     try {
-      final uri = Uri.parse(url);
-      final response = await http.get(uri);
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        throw Exception('HTTP ${response.statusCode}');
+      Uint8List bytes;
+      String fileName;
+
+      if (_isDataUri) {
+        bytes = _decodeBase64() ?? Uint8List(0);
+        fileName = _dataUriFileName();
+        if (bytes.isEmpty) throw Exception('Decode failed');
+      } else {
+        final response = await http.get(Uri.parse(chatMedia));
+        if (response.statusCode < 200 || response.statusCode >= 300) {
+          throw Exception('HTTP ${response.statusCode}');
+        }
+        bytes = response.bodyBytes;
+        fileName = _fileNameFromUrl(chatMedia);
       }
 
       Directory? baseDir = await getExternalStorageDirectory();
       baseDir ??= await getApplicationDocumentsDirectory();
-
       final targetDir = Directory('${baseDir.path}${Platform.pathSeparator}seyra_downloads');
       if (!await targetDir.exists()) {
         await targetDir.create(recursive: true);
       }
-
-      final fileName = _fileNameFromUrl(url);
       final targetFile = File('${targetDir.path}${Platform.pathSeparator}$fileName');
-      await targetFile.writeAsBytes(response.bodyBytes, flush: true);
+      await targetFile.writeAsBytes(bytes, flush: true);
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -91,7 +137,7 @@ class ChatBubble extends StatelessWidget {
     }
   }
 
-  void _openImageViewer(BuildContext context, String url) {
+  void _openImageViewer(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) {
@@ -104,7 +150,7 @@ class ChatBubble extends StatelessWidget {
               title: const Text(''),
               actions: [
                 IconButton(
-                  onPressed: () => _downloadImage(context, url),
+                  onPressed: () => _downloadImage(context),
                   icon: const Icon(Icons.download_rounded),
                 ),
               ],
@@ -113,34 +159,49 @@ class ChatBubble extends StatelessWidget {
               child: InteractiveViewer(
                 minScale: 1.0,
                 maxScale: 4.0,
-                child: Image.network(
-                  url,
-                  fit: BoxFit.contain,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return SizedBox(
-                      width: 28,
-                      height: 28,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: theme.colorScheme.onSurface,
+                child: _isDataUri
+                    ? _buildBase64Image(fit: BoxFit.contain)
+                    : Image.network(
+                        chatMedia,
+                        fit: BoxFit.contain,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return SizedBox(
+                            width: 28,
+                            height: 28,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(
+                            Icons.broken_image_outlined,
+                            size: 48,
+                            color: Colors.white70,
+                          );
+                        },
                       ),
-                    );
-                  },
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Icon(
-                      Icons.broken_image_outlined,
-                      size: 48,
-                      color: Colors.white70,
-                    );
-                  },
-                ),
               ),
             ),
           );
         },
       ),
     );
+  }
+
+  Widget _buildBase64Image({BoxFit fit = BoxFit.cover}) {
+    final bytes = _decodeBase64();
+    if (bytes == null || bytes.isEmpty) {
+      return Container(
+        height: 120,
+        color: Colors.red.withOpacity(0.1),
+        alignment: Alignment.center,
+        child: const Icon(Icons.error_outline, color: Colors.red),
+      );
+    }
+    return Image.memory(bytes, fit: fit);
   }
 
   @override
@@ -162,14 +223,6 @@ class ChatBubble extends StatelessWidget {
     final Color textColor = isFromMe
         ? theme.colorScheme.onTertiary
         : theme.colorScheme.onSurface;
-
-    final String mediaLower = chatMedia.toLowerCase();
-    final bool isImageMedia = mediaLower.endsWith('.png') ||
-        mediaLower.endsWith('.jpg') ||
-        mediaLower.endsWith('.jpeg') ||
-        mediaLower.endsWith('.gif') ||
-        mediaLower.contains('/chats/images/') ||
-        mediaLower.contains('/chats/gifs/');
 
     return GestureDetector(
       onLongPress: onLongPress,
@@ -222,39 +275,46 @@ class ChatBubble extends StatelessWidget {
                       if (chatMedia.isNotEmpty) ...[
                         ClipRRect(
                           borderRadius: BorderRadius.circular(16),
-                          child: isImageMedia
+                          child: _isImageMedia
                               ? InkWell(
-                                  onTap: () => _openImageViewer(context, chatMedia),
-                                  child: Image.network(
-                                    chatMedia,
-                                    fit: BoxFit.cover,
-                                    loadingBuilder:
-                                        (context, child, loadingProgress) {
-                                      if (loadingProgress == null) return child;
-                                      return Container(
-                                        height: 160,
-                                        color: theme.colorScheme.onSurface
-                                            .withOpacity(0.05),
-                                        alignment: Alignment.center,
-                                        child: SizedBox(
-                                          width: 18,
-                                          height: 18,
-                                          child: CircularProgressIndicator(
-                                            color: theme.colorScheme.onSurface,
-                                            strokeWidth: 2,
+                                  onTap: () => _openImageViewer(context),
+                                  child: _isDataUri
+                                      ? _buildBase64Image()
+                                      : Image.network(
+                                          chatMedia,
+                                          fit: BoxFit.cover,
+                                          loadingBuilder:
+                                              (context, child, loadingProgress) {
+                                            if (loadingProgress == null) {
+                                              return child;
+                                            }
+                                            return Container(
+                                              height: 160,
+                                              color: theme.colorScheme.onSurface
+                                                  .withOpacity(0.05),
+                                              alignment: Alignment.center,
+                                              child: SizedBox(
+                                                width: 18,
+                                                height: 18,
+                                                child: CircularProgressIndicator(
+                                                  color: theme
+                                                      .colorScheme.onSurface,
+                                                  strokeWidth: 2,
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                          errorBuilder:
+                                              (context, error, stackTrace) =>
+                                                  Container(
+                                            height: 120,
+                                            color: Colors.red.withOpacity(0.1),
+                                            alignment: Alignment.center,
+                                            child: const Icon(
+                                                Icons.error_outline,
+                                                color: Colors.red),
                                           ),
                                         ),
-                                      );
-                                    },
-                                    errorBuilder: (context, error, stackTrace) =>
-                                        Container(
-                                      height: 120,
-                                      color: Colors.red.withOpacity(0.1),
-                                      alignment: Alignment.center,
-                                      child: const Icon(Icons.error_outline,
-                                          color: Colors.red),
-                                    ),
-                                  ),
                                 )
                               : Container(
                                   padding: const EdgeInsets.symmetric(
@@ -273,7 +333,9 @@ class ChatBubble extends StatelessWidget {
                                       const SizedBox(width: 10),
                                       Flexible(
                                         child: Text(
-                                          chatMedia.split('/').last,
+                                          _isDataUri
+                                              ? _dataUriFileName()
+                                              : chatMedia.split('/').last,
                                           style: TextStyle(
                                             fontFamily: 'Geist',
                                             fontSize: 12,

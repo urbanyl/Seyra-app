@@ -1,12 +1,14 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart' as fp;
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:seyra/l10n/app_localizations.dart';
 
 enum _AttachAction { camera, gallery, file, gif }
+
+const int _maxFileSize = 500 * 1024;
 
 class ChatInputWidget extends StatefulWidget {
   final Function createChatDoc;
@@ -307,61 +309,61 @@ class _ChatInputWidgetState extends State<ChatInputWidget> {
   }
 
   void handleUseCamera(ImageSource source) async {
-    var imagePicker = ImagePicker();
+    final imagePicker = ImagePicker();
     try {
-      var xfile = await imagePicker.pickImage(source: source, imageQuality: 50);
+      final xfile = await imagePicker.pickImage(source: source, imageQuality: 20);
       if (xfile == null) return;
-      var uploadTask = await FirebaseStorage.instance
-          .ref()
-          .child('chats')
-          .child('images')
-          .child(xfile.path.substring(xfile.path.lastIndexOf('/') + 1))
-          .putData(await xfile.readAsBytes());
-
-      mediaMessage = await uploadTask.ref.getDownloadURL();
+      final bytes = await xfile.readAsBytes();
+      final b64 = base64Encode(bytes);
+      mediaMessage = 'data:image/jpeg;base64,$b64';
       widget.createChatDoc('', mediaMessage);
-    } catch (err) {
-
-    }
+    } catch (_) {}
   }
 
   void handleFile() async {
-    fp.FilePickerResult? result = await fp.FilePicker.pickFiles(withData: true);
-
-    if (result != null) {
-      final Uint8List? fileBytes = result.files.first.bytes;
-      if (fileBytes == null) return;
-      final String fileName = result.files.first.name;
-      var uploadTask = await FirebaseStorage.instance
-          .ref()
-          .child('chats')
-          .child('files')
-          .child(fileName)
-          .putData(fileBytes);
-      mediaMessage = await uploadTask.ref.getDownloadURL();
-      widget.createChatDoc('', mediaMessage);
+    final result = await fp.FilePicker.pickFiles(withData: true);
+    if (result == null) return;
+    final fileBytes = result.files.first.bytes;
+    if (fileBytes == null) return;
+    if (fileBytes.length > _maxFileSize) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('File too large. Max 500KB.', style: TextStyle(fontFamily: 'Hanken Grotesk')),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
     }
+    final fileName = result.files.first.name;
+    final b64 = base64Encode(fileBytes);
+    mediaMessage = 'data:file;name=$fileName;base64,$b64';
+    widget.createChatDoc('', mediaMessage);
   }
 
   void handleGif() async {
-    fp.FilePickerResult? result = await fp.FilePicker.pickFiles(
+    final result = await fp.FilePicker.pickFiles(
       withData: true,
       type: fp.FileType.custom,
       allowedExtensions: ['gif'],
     );
-
-    if (result != null) {
-      final Uint8List? fileBytes = result.files.first.bytes;
-      if (fileBytes == null) return;
-      final String fileName = result.files.first.name;
-      var uploadTask = await FirebaseStorage.instance
-          .ref()
-          .child('chats')
-          .child('gifs')
-          .child(fileName)
-          .putData(fileBytes);
-      mediaMessage = await uploadTask.ref.getDownloadURL();
-      widget.createChatDoc('', mediaMessage);
+    if (result == null) return;
+    final fileBytes = result.files.first.bytes;
+    if (fileBytes == null) return;
+    if (fileBytes.length > _maxFileSize) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('File too large. Max 500KB.', style: TextStyle(fontFamily: 'Hanken Grotesk')),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
     }
+    final b64 = base64Encode(fileBytes);
+    mediaMessage = 'data:image/gif;base64,$b64';
+    widget.createChatDoc('', mediaMessage);
   }
 }
