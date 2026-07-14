@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "110059837900",
+    "project_id": "seyra-92f01",
+    "storage_bucket": "seyra-92f01.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:110059837900:android:04b3a51e1b327be71f6569",
+        "android_client_info": {
+          "package_name": "com.emprise.seyra"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyARs3VVHOr3FOfg0usHc2YkDOFMJyVanwU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
