@@ -2,8 +2,6 @@
 
 <img src="assets/images/splash_logo.png" alt="Seyra Logo" width="100" />
 
-# Seyra
-
 **Secure, real-time messaging with end-to-end audio/video calls.**
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter)](https://flutter.dev)
