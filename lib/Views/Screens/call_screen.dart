@@ -1162,12 +1162,10 @@ class _CallPageState extends State<CallPage> {
     }
 
 
-    // registerPeerConnectionListeners();
     peerConnection?.onConnectionState = (RTCPeerConnectionState state) {
     };
 
     peerConnection?.onAddStream = (MediaStream stream) {
-      // onAddRemoteStream?.call(stream);
       _remoteStream = stream;
       _remoteVideoRenderer.srcObject = _remoteStream;
       setState(() {});
@@ -1175,7 +1173,6 @@ class _CallPageState extends State<CallPage> {
 
     peerConnection!.onIceCandidate = (RTCIceCandidate candidate) async {
       if (candidate.candidate != null) {
-        /// PROBABLY SHOULD UPLOAD THIS TO FIREBASE
         final ref = await _roomRef
             .collection('callerCandidates')
             .add(candidate.toMap());
@@ -1240,8 +1237,7 @@ class _CallPageState extends State<CallPage> {
       }
     };
 
-    /// setting up  a listener for remote sdp
-    /// i really dont lnow if we should do the below for contacts also
+    /// setting up a listener for remote sdp
     _roomRef.snapshots().listen((snapShot) async {
       Map<String, dynamic> data = snapShot.data() as Map<String, dynamic>;
       if (data['answer'] != null) {
@@ -1260,15 +1256,6 @@ class _CallPageState extends State<CallPage> {
             data['candidate'], data['sdpMid'], data['sdpMLineIndex']);
         peerConnection!.addCandidate(remoteCandidate);
       });
-      // snapShot.docChanges.forEach((element) {
-      //   if (element.type == DocumentChangeType.added) {
-      //     Map<String, dynamic> data =
-      //         element.doc.data() as Map<String, dynamic>;
-      //     var remoteCandidate = RTCIceCandidate(
-      //         data['candidate'], data['sdpMid'], data['sdpMLineIndex']);
-      //     peerConnection!.addCandidate(remoteCandidate);
-      //   }
-      // });
     });
   }
 
@@ -1291,8 +1278,6 @@ class _CallPageState extends State<CallPage> {
       'optional': []
     };
     var roomSnapshot = await _myRoomRef.get();
-    // var roomSnapshot2 = await FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser!.uid).collection('Room').get();
-    // var roomSnapshot = roomSnapshot2.docs[0];
     if (roomSnapshot.exists) {
       peerConnection = await createPeerConnection(iceConfiguration, offerSdpConstraints);
       
@@ -1306,16 +1291,10 @@ class _CallPageState extends State<CallPage> {
       };
 
       peerConnection?.onAddStream = (MediaStream stream) {
-        // onAddRemoteStream?.call(stream);
         _remoteStream = stream;
         _remoteVideoRenderer.srcObject = _remoteStream;
         setState(() {});
       };
-      // registerPeerConnectionListeners();
-
-      // _localStream?.getTracks().forEach((track) {
-      //   peerConnection?.addTrack(track, _localStream!);
-      // });
 
       // Code for collecting ICE candidates below
       var calleeCandidatesCollection =
@@ -1331,7 +1310,6 @@ class _CallPageState extends State<CallPage> {
             contactCalleeCandidateCollection
                 .doc(value.id)
                 .set(candidate.toMap()));
-        // contactCalleeCandidateCollection.doc(ref.id).set(candidate.toMap());
       };
       // Code for collecting ICE candidate above
 
@@ -1343,11 +1321,6 @@ class _CallPageState extends State<CallPage> {
           setState(() {});
         }
       };
-      // peerConnection?.onTrack = (RTCTrackEvent event) {
-      //   event.streams[0].getTracks().forEach((track) {
-      //     _remoteStream?.addTrack(track);
-      //   });
-      // };
 
       // Code for creating SDP answer below
       var data = roomSnapshot.data() as Map<String, dynamic>;
@@ -1376,12 +1349,6 @@ class _CallPageState extends State<CallPage> {
               data['candidate'], data['sdpMid'], data['sdpMLineIndex']);
           peerConnection!.addCandidate(candidate);
         });
-        // snapshot.docChanges.forEach((document) {
-        //   var data = document.doc.data() as Map<String, dynamic>;
-        //   final candidate = RTCIceCandidate(
-        //       data['candidate'], data['sdpMid'], data['sdpMLineIndex']);
-        //   peerConnection!.addCandidate(candidate);
-        // });
       });
     }
   }

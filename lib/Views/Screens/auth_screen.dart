@@ -36,9 +36,12 @@ class _AuthPageState extends State<AuthPage>
     return Scaffold(
       backgroundColor: const Color(0xFFFFFFFF),
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 440),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
               child: ConstrainedBox(
                 constraints: BoxConstraints(
                   minHeight: constraints.maxHeight,
@@ -298,6 +301,8 @@ class _AuthPageState extends State<AuthPage>
               ),
             );
           },
+        ),
+        ),
         ),
       ),
     );

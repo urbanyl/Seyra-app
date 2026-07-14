@@ -68,7 +68,7 @@ class MyApp extends StatelessWidget {
       child: Builder(builder: (context) {
         return FutureBuilder(
           future: Provider.of<MyTheme>(context, listen: false).setTheme(),
-          builder: (context, asanshot) => asanshot.connectionState ==
+          builder: (context, asyncSnapshot) => asyncSnapshot.connectionState ==
                   ConnectionState.waiting
               ? Center()
               : Consumer<MyTheme>(
@@ -86,15 +86,15 @@ class MyApp extends StatelessWidget {
                     ],
                     home: StreamBuilder(
                         stream: FirebaseAuth.instance.authStateChanges(),
-                        builder: (context, userSnapsoht) {
-                          return userSnapsoht.connectionState ==
+                        builder: (context, userSnapshot) {
+                          return userSnapshot.connectionState ==
                                   ConnectionState.waiting
                               ? Scaffold(
                                   body: Center(
                                     child: CircularProgressIndicator.adaptive(),
                                   ),
                                 )
-                              : userSnapsoht.hasData
+                              : userSnapshot.hasData
                                   ? const _LockGate(child: HomePage())
                                   : AuthPage();
                         }),

@@ -28,6 +28,7 @@ class _HomePageState extends State<HomePage> {
   final Set<String> _notifiedMessageIds = {};
   bool _isCallPageOpen = false;
   TabController? _tabController;
+  int _selectedIndex = 0;
 
   @override
   void initState() {
@@ -175,6 +176,21 @@ class _HomePageState extends State<HomePage> {
     setState(() {});
   }
 
+  Widget _buildTabContent(int index) {
+    switch (index) {
+      case 0:
+        return ChatList();
+      case 1:
+        return ChatList(filter: 'Private');
+      case 2:
+        return ChatList(filter: 'Group');
+      case 3:
+        return CallsListWidget();
+      default:
+        return ChatList();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -189,110 +205,363 @@ class _HomePageState extends State<HomePage> {
         }
 
         final theme = Theme.of(context);
-        final isGroupsTab = tabController.index == 2;
-        return Scaffold(
-          appBar: AppBar(
-            toolbarHeight: 50,
-            title: Image.asset(
-              'assets/images/splash_logo.png',
-              height: 32,
-              fit: BoxFit.contain,
-              color: theme.brightness == Brightness.dark
-                  ? theme.colorScheme.onSurface
-                  : null,
-            ),
-            centerTitle: true,
-            primary: true,
-          ),
-          drawer: MyDrawer(),
-          floatingActionButton: FloatingActionButton(
-            backgroundColor: const Color(0xFF2B54ED),
-            foregroundColor: const Color(0xFF111111),
-            elevation: 4,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-              side: const BorderSide(color: Color(0xFF111111), width: 1.5),
-            ),
-            onPressed: () {
-              if (isGroupsTab) {
-                Navigator.of(context).pushNamed(CreateGroupPage.ROUTE_NAME);
-              } else {
-                Navigator.of(context).pushNamed(ContactsPage.ROUTE_NAME);
-              }
-            },
-            child: Icon(
-              isGroupsTab ? Icons.group_add_outlined : Icons.add,
-              size: 26,
-            ),
-          ),
-          body: TabBarView(
-            children: [
-              ChatList(),
-              ChatList(filter: 'Private'),
-              ChatList(filter: 'Group'),
-              CallsListWidget(),
-            ],
-          ),
-          bottomNavigationBar: Container(
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth > 800;
+
+            if (isWide) {
+              return _buildWideLayout(t, theme, tabController);
+            } else {
+              return _buildMobileLayout(t, theme, tabController);
+            }
+          },
+        );
+      }),
+    );
+  }
+
+  Widget _buildWideLayout(AppLocalizations t, ThemeData theme, TabController tabController) {
+    final isGroupsTab = _selectedIndex == 2;
+
+    return Scaffold(
+      body: Row(
+        children: [
+          // Sidebar
+          Container(
+            width: 260,
             decoration: BoxDecoration(
               color: theme.scaffoldBackgroundColor,
               border: Border(
-                top: BorderSide(
-                  color: theme.dividerColor.withOpacity(0.08),
+                right: BorderSide(
+                  color: theme.dividerColor.withOpacity(0.1),
                   width: 1,
                 ),
               ),
             ),
-            child: SafeArea(
-              child: SizedBox(
-                height: 64,
-                child: TabBar(
-                  indicatorColor: const Color(0xFF2B54ED),
-                  indicatorWeight: 3.5,
-                  indicatorSize: TabBarIndicatorSize.label,
-                  labelColor: theme.textTheme.bodyLarge?.color ??
-                      const Color(0xFF111111),
-                  unselectedLabelColor:
-                      (theme.textTheme.bodyLarge?.color ?? const Color(0xFF111111))
-                          .withOpacity(0.4),
-                  labelStyle: const TextStyle(
-                    fontFamily: 'Hanken Grotesk',
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
+            child: Column(
+              children: [
+                // Logo header
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                  child: Row(
+                    children: [
+                      Image.asset(
+                        'assets/images/splash_logo.png',
+                        height: 28,
+                        color: theme.brightness == Brightness.dark
+                            ? theme.colorScheme.onSurface
+                            : null,
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        'SEYRA',
+                        style: TextStyle(
+                          fontFamily: 'Geist',
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.onSurface.withOpacity(0.5),
+                          letterSpacing: 3.0,
+                        ),
+                      ),
+                    ],
                   ),
-                  unselectedLabelStyle: const TextStyle(
-                    fontFamily: 'Hanken Grotesk',
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
-                  tabs: [
-                    Tab(
-                      icon: const Icon(Icons.chat_bubble_outline_rounded, size: 22),
-                      text: t.tabAll,
-                      iconMargin: const EdgeInsets.only(bottom: 2),
-                    ),
-                    Tab(
-                      icon: const Icon(Icons.person_outline_rounded, size: 22),
-                      text: t.tabPv,
-                      iconMargin: const EdgeInsets.only(bottom: 2),
-                    ),
-                    Tab(
-                      icon: const Icon(Icons.people_outline_rounded, size: 22),
-                      text: t.tabGroups,
-                      iconMargin: const EdgeInsets.only(bottom: 2),
-                    ),
-                    Tab(
-                      icon: const Icon(Icons.phone_outlined, size: 22),
-                      text: t.tabCalls,
-                      iconMargin: const EdgeInsets.only(bottom: 2),
-                    ),
-                  ],
                 ),
-              ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Divider(height: 1, color: theme.dividerColor.withOpacity(0.1)),
+                ),
+                const SizedBox(height: 8),
+                // Navigation items
+                _buildSidebarItem(
+                  icon: Icons.chat_bubble_outline_rounded,
+                  label: t.tabAll,
+                  index: 0,
+                  theme: theme,
+                  isSelected: _selectedIndex == 0,
+                  onTap: () {
+                    setState(() => _selectedIndex = 0);
+                    tabController.index = 0;
+                  },
+                ),
+                _buildSidebarItem(
+                  icon: Icons.person_outline_rounded,
+                  label: t.tabPv,
+                  index: 1,
+                  theme: theme,
+                  isSelected: _selectedIndex == 1,
+                  onTap: () {
+                    setState(() => _selectedIndex = 1);
+                    tabController.index = 1;
+                  },
+                ),
+                _buildSidebarItem(
+                  icon: Icons.people_outline_rounded,
+                  label: t.tabGroups,
+                  index: 2,
+                  theme: theme,
+                  isSelected: _selectedIndex == 2,
+                  onTap: () {
+                    setState(() => _selectedIndex = 2);
+                    tabController.index = 2;
+                  },
+                ),
+                _buildSidebarItem(
+                  icon: Icons.phone_outlined,
+                  label: t.tabCalls,
+                  index: 3,
+                  theme: theme,
+                  isSelected: _selectedIndex == 3,
+                  onTap: () {
+                    setState(() => _selectedIndex = 3);
+                    tabController.index = 3;
+                  },
+                ),
+                const Spacer(),
+                // New chat / group button
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 44,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2B54ED),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () {
+                        if (isGroupsTab) {
+                          Navigator.of(context).pushNamed(CreateGroupPage.ROUTE_NAME);
+                        } else {
+                          Navigator.of(context).pushNamed(ContactsPage.ROUTE_NAME);
+                        }
+                      },
+                      icon: Icon(
+                        isGroupsTab ? Icons.group_add_outlined : Icons.add,
+                        size: 18,
+                      ),
+                      label: Text(
+                        isGroupsTab ? 'New Group' : 'New Chat',
+                        style: const TextStyle(
+                          fontFamily: 'Hanken Grotesk',
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                // Drawer button
+                Padding(
+                  padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 44,
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: theme.colorScheme.onSurface.withOpacity(0.6),
+                        side: BorderSide(color: theme.dividerColor, width: 1),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () => _openDrawer(context),
+                      icon: const Icon(Icons.menu_rounded, size: 18),
+                      label: const Text(
+                        'Settings',
+                        style: TextStyle(
+                          fontFamily: 'Hanken Grotesk',
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-        );
-      }),
+          // Main content
+          Expanded(
+            child: _buildTabContent(_selectedIndex),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSidebarItem({
+    required IconData icon,
+    required String label,
+    required int index,
+    required ThemeData theme,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+      child: Material(
+        color: isSelected
+            ? const Color(0xFF2B54ED).withOpacity(0.1)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  size: 20,
+                  color: isSelected
+                      ? const Color(0xFF2B54ED)
+                      : theme.colorScheme.onSurface.withOpacity(0.5),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontFamily: 'Hanken Grotesk',
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: isSelected
+                        ? const Color(0xFF2B54ED)
+                        : theme.colorScheme.onSurface.withOpacity(0.7),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openDrawer(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => Align(
+        alignment: Alignment.centerLeft,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            width: 300,
+            height: double.infinity,
+            child: MyDrawer(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileLayout(AppLocalizations t, ThemeData theme, TabController tabController) {
+    final isGroupsTab = tabController.index == 2;
+    return Scaffold(
+      appBar: AppBar(
+        toolbarHeight: 50,
+        title: Image.asset(
+          'assets/images/splash_logo.png',
+          height: 32,
+          fit: BoxFit.contain,
+          color: theme.brightness == Brightness.dark
+              ? theme.colorScheme.onSurface
+              : null,
+        ),
+        centerTitle: true,
+        primary: true,
+      ),
+      drawer: MyDrawer(),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: const Color(0xFF2B54ED),
+        foregroundColor: const Color(0xFF111111),
+        elevation: 4,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: Color(0xFF111111), width: 1.5),
+        ),
+        onPressed: () {
+          if (isGroupsTab) {
+            Navigator.of(context).pushNamed(CreateGroupPage.ROUTE_NAME);
+          } else {
+            Navigator.of(context).pushNamed(ContactsPage.ROUTE_NAME);
+          }
+        },
+        child: Icon(
+          isGroupsTab ? Icons.group_add_outlined : Icons.add,
+          size: 26,
+        ),
+      ),
+      body: TabBarView(
+        children: [
+          ChatList(),
+          ChatList(filter: 'Private'),
+          ChatList(filter: 'Group'),
+          CallsListWidget(),
+        ],
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: theme.scaffoldBackgroundColor,
+          border: Border(
+            top: BorderSide(
+              color: theme.dividerColor.withOpacity(0.08),
+              width: 1,
+            ),
+          ),
+        ),
+        child: SafeArea(
+          child: SizedBox(
+            height: 64,
+            child: TabBar(
+              indicatorColor: const Color(0xFF2B54ED),
+              indicatorWeight: 3.5,
+              indicatorSize: TabBarIndicatorSize.label,
+              labelColor: theme.textTheme.bodyLarge?.color ??
+                  const Color(0xFF111111),
+              unselectedLabelColor:
+                  (theme.textTheme.bodyLarge?.color ?? const Color(0xFF111111))
+                      .withOpacity(0.4),
+              labelStyle: const TextStyle(
+                fontFamily: 'Hanken Grotesk',
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+              unselectedLabelStyle: const TextStyle(
+                fontFamily: 'Hanken Grotesk',
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+              tabs: [
+                Tab(
+                  icon: const Icon(Icons.chat_bubble_outline_rounded, size: 22),
+                  text: t.tabAll,
+                  iconMargin: const EdgeInsets.only(bottom: 2),
+                ),
+                Tab(
+                  icon: const Icon(Icons.person_outline_rounded, size: 22),
+                  text: t.tabPv,
+                  iconMargin: const EdgeInsets.only(bottom: 2),
+                ),
+                Tab(
+                  icon: const Icon(Icons.people_outline_rounded, size: 22),
+                  text: t.tabGroups,
+                  iconMargin: const EdgeInsets.only(bottom: 2),
+                ),
+                Tab(
+                  icon: const Icon(Icons.phone_outlined, size: 22),
+                  text: t.tabCalls,
+                  iconMargin: const EdgeInsets.only(bottom: 2),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

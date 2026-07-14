@@ -214,7 +214,7 @@ class AppSettingsScreen extends StatelessWidget {
                   Wrap(
                     spacing: 12,
                     runSpacing: 12,
-                    children: ThemePreDifendColors.values.map((c) {
+                    children: ThemePreDefinedColors.values.map((c) {
                       final color = context.read<MyTheme>().appPreDefinedColors[c]!;
                       final isSelected = myTheme.selectedMainColorValue?.value == color.value;
                       return InkWell(

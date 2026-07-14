@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-enum ThemePreDifendTextSize{
+enum ThemePreDefinedTextSize{
   Small,
   Medium,
   Large,
 }
 
-enum ThemePreDifendColors{
+enum ThemePreDefinedColors{
   white,
   Dark,
   Red,
@@ -25,14 +25,14 @@ class MyTheme with ChangeNotifier{
   double? _selectedTextSize;
   double? get selectedTextSize => _selectedTextSize;
 
-  final appPreDefinedTextSizes = <ThemePreDifendTextSize,double>{
-    ThemePreDifendTextSize.Small : 7,
-    ThemePreDifendTextSize.Medium : 10,
-    ThemePreDifendTextSize.Large : 30, 
+  final appPreDefinedTextSizes = <ThemePreDefinedTextSize,double>{
+    ThemePreDefinedTextSize.Small : 7,
+    ThemePreDefinedTextSize.Medium : 10,
+    ThemePreDefinedTextSize.Large : 30, 
   };
 
   final appPreDefinedColors = {
-    ThemePreDifendColors.white : MaterialColor(
+    ThemePreDefinedColors.white : MaterialColor(
       Colors.white.value,
        <int, Color>{
         50: Colors.white54,
@@ -47,7 +47,7 @@ class MyTheme with ChangeNotifier{
         900: Colors.white,
       }
     ),
-    ThemePreDifendColors.Dark : MaterialColor(
+    ThemePreDefinedColors.Dark : MaterialColor(
       Colors.black.value,
       const <int, Color>{
         50: Colors.black,
@@ -62,11 +62,11 @@ class MyTheme with ChangeNotifier{
         900: Colors.black,
       }
     ),
-    ThemePreDifendColors.Red : Colors.red,
-    ThemePreDifendColors.Blue : Colors.blue,
-    ThemePreDifendColors.Green : Colors.green,
-    ThemePreDifendColors.Yellow : Colors.yellow,
-    ThemePreDifendColors.Orange : Colors.deepOrange
+    ThemePreDefinedColors.Red : Colors.red,
+    ThemePreDefinedColors.Blue : Colors.blue,
+    ThemePreDefinedColors.Green : Colors.green,
+    ThemePreDefinedColors.Yellow : Colors.yellow,
+    ThemePreDefinedColors.Orange : Colors.deepOrange
   };
 
 
@@ -80,29 +80,29 @@ class MyTheme with ChangeNotifier{
     notifyListeners();
   }
 
-  void selectTextSize(ThemePreDifendTextSize preDifendTextSize) async {
+  void selectTextSize(ThemePreDefinedTextSize preDefinedTextSize) async {
     final prefs = await SharedPreferences.getInstance();
-    _selectedTextSize = appPreDefinedTextSizes[preDifendTextSize]!;
+    _selectedTextSize = appPreDefinedTextSizes[preDefinedTextSize]!;
     prefs.setDouble('textSize', _selectedTextSize ?? 20);
     notifyListeners();
   }
 
 
 
-  void selectedMainColor(ThemePreDifendColors preDifendColors) async {
+  void selectedMainColor(ThemePreDefinedColors preDefinedColors) async {
     final prefs = await SharedPreferences.getInstance();
-    prefs.setInt('color-value', appPreDefinedColors[preDifendColors]!.value);
-    prefs.setInt('color-shade50', appPreDefinedColors[preDifendColors]!.shade50.value);
-    prefs.setInt('color-shade100', appPreDefinedColors[preDifendColors]!.shade100.value);
-    prefs.setInt('color-shade200', appPreDefinedColors[preDifendColors]!.shade200.value);
-    prefs.setInt('color-shade300', appPreDefinedColors[preDifendColors]!.shade300.value);
-    prefs.setInt('color-shade400', appPreDefinedColors[preDifendColors]!.shade400.value);
-    prefs.setInt('color-shade500', appPreDefinedColors[preDifendColors]!.shade500.value);
-    prefs.setInt('color-shade600', appPreDefinedColors[preDifendColors]!.shade600.value);
-    prefs.setInt('color-shade700', appPreDefinedColors[preDifendColors]!.shade700.value);
-    prefs.setInt('color-shade800', appPreDefinedColors[preDifendColors]!.shade800.value);
-    prefs.setInt('color-shade900', appPreDefinedColors[preDifendColors]!.shade900.value);
-    _selectedMainColor = appPreDefinedColors[preDifendColors]!;
+    prefs.setInt('color-value', appPreDefinedColors[preDefinedColors]!.value);
+    prefs.setInt('color-shade50', appPreDefinedColors[preDefinedColors]!.shade50.value);
+    prefs.setInt('color-shade100', appPreDefinedColors[preDefinedColors]!.shade100.value);
+    prefs.setInt('color-shade200', appPreDefinedColors[preDefinedColors]!.shade200.value);
+    prefs.setInt('color-shade300', appPreDefinedColors[preDefinedColors]!.shade300.value);
+    prefs.setInt('color-shade400', appPreDefinedColors[preDefinedColors]!.shade400.value);
+    prefs.setInt('color-shade500', appPreDefinedColors[preDefinedColors]!.shade500.value);
+    prefs.setInt('color-shade600', appPreDefinedColors[preDefinedColors]!.shade600.value);
+    prefs.setInt('color-shade700', appPreDefinedColors[preDefinedColors]!.shade700.value);
+    prefs.setInt('color-shade800', appPreDefinedColors[preDefinedColors]!.shade800.value);
+    prefs.setInt('color-shade900', appPreDefinedColors[preDefinedColors]!.shade900.value);
+    _selectedMainColor = appPreDefinedColors[preDefinedColors]!;
     notifyListeners();
   }
 

@@ -21,12 +21,4 @@ class MyMaterialColor extends MaterialColor{
       }
     };
   }
-
-  // MaterialColor.fromMap(Map<String,dynamic> map){
-  //   int value = map['value'];
-  //   <int,Color> co= {
-
-  //   }
-  //   return MaterialColor(primary, swatch);
-  // }
 }
